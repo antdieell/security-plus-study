@@ -1,0 +1,22 @@
+var ACRONYMS = [
+  { term: "SIEM", meaning: "Security Information and Event Management — central log correlation and alerting." },
+  { term: "SOAR", meaning: "Security Orchestration, Automation, and Response — playbooks that execute response steps." },
+  { term: "EDR", meaning: "Endpoint Detection and Response — continuous endpoint telemetry and remote response." },
+  { term: "NAC", meaning: "Network Access Control — device posture checks before or as a host joins the network." },
+  { term: "PKI", meaning: "Public Key Infrastructure — CAs, certificates, and revocation used to bind keys to identities." },
+  { term: "IAM", meaning: "Identity and Access Management — how identities are created, authenticated, and authorized." },
+  { term: "MFA", meaning: "Multi-Factor Authentication — more than one factor type to prove identity." },
+  { term: "RTO", meaning: "Recovery Time Objective — how quickly a process must be restored." },
+  { term: "RPO", meaning: "Recovery Point Objective — maximum acceptable data-loss, measured in time." },
+  { term: "SLA", meaning: "Service Level Agreement — measurable service targets such as uptime." },
+  { term: "DLP", meaning: "Data Loss Prevention — detect or block sensitive data leaving approved paths." },
+  { term: "CASB", meaning: "Cloud Access Security Broker — visibility and policy for SaaS usage." },
+  { term: "SASE", meaning: "Secure Access Service Edge — cloud-delivered networking plus security services." },
+  { term: "ZTNA", meaning: "Zero Trust Network Access — per-app access after identity and device checks, not a flat VPN." },
+  { term: "IdP", meaning: "Identity Provider — the system that authenticates users for federation/SSO." },
+  { term: "UEBA", meaning: "User and Entity Behavior Analytics — detect anomalies against a baseline." },
+  { term: "HSM", meaning: "Hardware Security Module — dedicated hardware for cryptographic keys." },
+  { term: "FDE", meaning: "Full Disk Encryption — encrypts the storage volume at rest." },
+  { term: "WAF", meaning: "Web Application Firewall — HTTP/S inspection in front of web apps." },
+  { term: "BIA", meaning: "Business Impact Analysis — maps process downtime cost to recovery targets." }
+];

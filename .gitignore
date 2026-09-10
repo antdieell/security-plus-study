@@ -1,0 +1,37 @@
+# Secrets and local environment
+.env
+.env.*
+*.pem
+*.key
+credentials.json
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Editor and OS
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+.vscode/
+.idea/
+
+# Development backups — keep locally, do not publish
+backup/
+
+# Unused legacy banks not loaded by the live app
+data/questions-v2.js
+data/questions-v3.js
+
+# Import/source artifacts — not required at runtime
+scripts/*.txt
+scripts/*-import.json
+scripts/*-report.json
+scripts/parsed-*.json
+scripts/second-source-pdf.txt
+scripts/second-source-import.json
+scripts/second-source-build-report.json
+scripts/import-report.json
+scripts/parsed-question-bank.json
+scripts/pairing-validation.txt

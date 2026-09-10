@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#070b14">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="description" content="Mobile-first CompTIA Security+ SY0-701 study app with quizzes, exam mode, flashcards, and progress tracking.">
+  <title>SEC+ Study · SY0-701</title>
+  <script>
+    (function () {
+      var path = location.pathname;
+      var last = path.split("/").pop() || "";
+      if (path && path.charAt(path.length - 1) !== "/" && last.indexOf(".") === -1) {
+        location.replace(path + "/" + location.search + location.hash);
+      }
+    })();
+  </script>
+  <link rel="manifest" href="./manifest.json">
+  <link rel="icon" href="./assets/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="./assets/icon-192.png">
+  <link rel="stylesheet" href="./css/styles.css?v=9">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="app-header">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">🛡️</span>
+      <div class="brand-copy">
+        <span>SEC+ STUDY</span>
+        <span class="brand-version">SY0-701</span>
+      </div>
+    </div>
+    <div class="streak-chip" id="header-streak" aria-label="Study streak">🔥 0</div>
+  </header>
+
+  <main class="app-main" id="main">
+    <section class="view is-active" id="view-home" aria-label="Home"></section>
+    <section class="view" id="view-study" aria-label="Study" hidden></section>
+    <section class="view" id="view-practice" aria-label="Practice" hidden></section>
+    <section class="view" id="view-quiz" aria-label="Quiz" hidden></section>
+    <section class="view" id="view-exam" aria-label="Exam Mode" hidden></section>
+    <section class="view" id="view-flashcards" aria-label="Flashcards" hidden></section>
+    <section class="view" id="view-progress" aria-label="Progress" hidden></section>
+    <section class="view" id="view-review" aria-label="Review" hidden></section>
+    <section class="view" id="view-pbq" aria-label="PBQ Practice" hidden></section>
+    <section class="view" id="view-ports" aria-label="Ports and Protocols" hidden></section>
+    <section class="view" id="view-acronyms" aria-label="Acronym drill" hidden></section>
+    <section class="view" id="view-settings" aria-label="Settings" hidden></section>
+    <section class="view" id="view-rapid" aria-label="Rapid Review" hidden></section>
+    <section class="view" id="view-examday" aria-label="Exam Day Review" hidden></section>
+    <section class="view" id="view-journal" aria-label="Error Journal" hidden></section>
+  </main>
+
+  <nav class="bottom-nav" aria-label="Primary">
+    <button class="nav-btn is-active" data-route="home" aria-current="page">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 11.5 12 4l8 7.5V20a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1v-8.5z"/></svg>
+      Home
+    </button>
+    <button class="nav-btn" data-route="study">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 0-3 3V4z"/><path d="M8 4v16"/></svg>
+      Study
+    </button>
+    <button class="nav-btn" data-route="practice">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg>
+      Practice
+    </button>
+    <button class="nav-btn" data-route="review">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 7h16M4 12h10M4 17h13"/></svg>
+      Review
+      <span class="nav-badge" id="nav-review-badge" hidden>0</span>
+    </button>
+    <button class="nav-btn" data-route="progress">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 19V9"/><path d="M10 19V5"/><path d="M16 19v-7"/><path d="M22 19H2"/></svg>
+      Progress
+    </button>
+  </nav>
+
+  <div class="modal-root" id="modal-root" hidden></div>
+
+  <script src="./data/domains.js?v=9"></script>
+  <script src="./data/objectives.js?v=9"></script>
+  <script src="./data/examConfig.js?v=9"></script>
+  <script src="./data/questions.js?v=9"></script>
+  <script src="./data/questions-source-v2.js?v=9"></script>
+  <script src="./data/flashcards.js?v=9"></script>
+  <script src="./data/studyTopics.js?v=9"></script>
+  <script src="./data/pbqs.js?v=9"></script>
+  <script src="./data/pbqs-v3.js?v=9"></script>
+  <script src="./data/ports.js?v=9"></script>
+  <script src="./data/acronyms.js?v=9"></script>
+  <script src="./js/utils.js?v=9"></script>
+  <script src="./js/storage.js?v=9"></script>
+  <script src="./js/coverage.js?v=9"></script>
+  <script src="./js/analytics.js?v=9"></script>
+  <script src="./js/adaptive.js?v=9"></script>
+  <script src="./js/plan.js?v=9"></script>
+  <script src="./js/study.js?v=9"></script>
+  <script src="./js/quiz.js?v=9"></script>
+  <script src="./js/exam.js?v=9"></script>
+  <script src="./js/flashcards.js?v=9"></script>
+  <script src="./js/progress.js?v=9"></script>
+  <script src="./js/pbq.js?v=9"></script>
+  <script src="./js/drills.js?v=9"></script>
+  <script src="./js/rapid.js?v=9"></script>
+  <script src="./js/settings.js?v=9"></script>
+  <script src="./js/app.js?v=9"></script>
+</body>
+</html>

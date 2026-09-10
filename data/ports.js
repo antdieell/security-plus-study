@@ -1,0 +1,23 @@
+var PORTS = [
+  { protocol: "FTP", port: "21", notes: "Cleartext file transfer; prefer SFTP/FTPS" },
+  { protocol: "SSH", port: "22", notes: "Encrypted remote admin / SFTP" },
+  { protocol: "Telnet", port: "23", notes: "Cleartext remote admin — avoid" },
+  { protocol: "SMTP", port: "25", notes: "Mail transfer; 587 often submission" },
+  { protocol: "DNS", port: "53", notes: "Name resolution, UDP/TCP" },
+  { protocol: "DHCP", port: "67/68", notes: "67 server, 68 client" },
+  { protocol: "HTTP", port: "80", notes: "Cleartext web" },
+  { protocol: "Kerberos", port: "88", notes: "Authentication" },
+  { protocol: "POP3", port: "110", notes: "Mail retrieval; 995 is POP3S" },
+  { protocol: "NTP", port: "123", notes: "Time sync" },
+  { protocol: "IMAP", port: "143", notes: "Mail access; 993 is IMAPS" },
+  { protocol: "SNMP", port: "161", notes: "Management; v3 is the secure version" },
+  { protocol: "LDAP", port: "389", notes: "Directory; 636 is LDAPS" },
+  { protocol: "HTTPS", port: "443", notes: "TLS web" },
+  { protocol: "SMB", port: "445", notes: "Windows file sharing" },
+  { protocol: "SMTPS", port: "465", notes: "Legacy SMTPS; 587 STARTTLS common" },
+  { protocol: "Syslog", port: "514", notes: "Logging; 6514 often TLS syslog" },
+  { protocol: "LDAPS", port: "636", notes: "LDAP over TLS" },
+  { protocol: "IMAPS", port: "993", notes: "IMAP over TLS" },
+  { protocol: "POP3S", port: "995", notes: "POP3 over TLS" },
+  { protocol: "RDP", port: "3389", notes: "Remote desktop" }
+];
