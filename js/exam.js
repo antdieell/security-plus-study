@@ -447,10 +447,13 @@ var Exam = (function () {
         (q.objective && getAppState().prefs.showObjectiveIds !== false ? " · " + q.objective : "") +
         (getAppState().prefs.showDifficulty ? " · " + q.difficulty : "") +
         (flag ? " · Flagged" : "") + "</p><p style=\"font-weight:750\">" + escapeHtml(q.question) +
-        "</p><p>" + status + "</p><p>Your answer: " +
-        (selected === null || selected === undefined ? "—" : escapeHtml(letters[selected] + ". " + q.options[selected])) +
-        "</p><p>Correct: " + escapeHtml(letters[q.correctAnswer] + ". " + q.options[q.correctAnswer]) +
-        "</p><p class=\"muted\">" + escapeHtml(q.explanation) + "</p>" +
+        "</p><p>" + status + "</p>" +
+        (typeof AnswerReview !== "undefined"
+          ? AnswerReview.renderHtml(q, selected)
+          : "<p>Your answer: " +
+            (selected === null || selected === undefined ? "—" : escapeHtml(letters[selected] + ". " + q.options[selected])) +
+            "</p><p>Correct: " + escapeHtml(letters[q.correctAnswer] + ". " + q.options[q.correctAnswer]) +
+            "</p><p class=\"muted\">" + escapeHtml(q.explanation) + "</p>") +
         (note ? "<p>Your note: " + escapeHtml(note) + "</p>" : "") +
         (q.topic ? "<button class=\"btn btn-secondary\" data-exam=\"study-concept\" data-topic=\"" + escapeHtml(q.topic) + "\">Study this concept</button>" : "") +
         "</article>" +

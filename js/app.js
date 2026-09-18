@@ -470,7 +470,7 @@ var App = (function () {
     if (!("serviceWorker" in navigator) || location.protocol === "file:") {
       return;
     }
-    navigator.serviceWorker.register("./service-worker.js", { scope: "./" }).catch(function () {});
+    navigator.serviceWorker.register("./service-worker.js?v=11", { scope: "./" }).catch(function () {});
   }
 
   function init() {

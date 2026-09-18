@@ -363,11 +363,22 @@ var Quiz = (function () {
     const progressPct = Math.round((session.index / total) * 100);
     const saved = isQuestionSaved(question.id);
     const letters = ["A", "B", "C", "D"];
+    const showMarks = session.checked && session.settings.mode !== "diagnostic" && !session.settings.timed && session.settings.mode !== "timed";
     const optionsHtml = question.options.map(function (option, index) {
+      const tags = [];
+      if (showMarks && index === session.selected) {
+        tags.push("<span class=\"option-tag option-tag-yours\">Your answer</span>");
+      }
+      if (showMarks && index === question.correctAnswer) {
+        tags.push("<span class=\"option-tag option-tag-correct\">Correct answer</span>");
+      }
       return (
-        "<button class=\"" + optionClass(question, index) + "\" data-action=\"select\" data-index=\"" + index + "\" aria-pressed=\"" + (session.selected === index) + "\">" +
+        "<button class=\"" + optionClass(question, index) + "\" data-action=\"select\" data-index=\"" + index + "\" aria-pressed=\"" + (session.selected === index) + "\"" + (session.checked ? " disabled" : "") + ">" +
           "<span class=\"letter\">" + letters[index] + "</span>" +
-          "<span>" + escapeHtml(option) + "</span>" +
+          "<span class=\"option-copy\">" +
+            "<span>" + escapeHtml(option) + "</span>" +
+            (tags.length ? "<span class=\"option-tags\">" + tags.join("") + "</span>" : "") +
+          "</span>" +
         "</button>"
       );
     }).join("");
@@ -377,10 +388,6 @@ var Quiz = (function () {
       if (session.settings.mode === "diagnostic" || session.settings.timed || session.settings.mode === "timed") {
         feedback = "<div class=\"feedback\" role=\"status\"><strong>Answer saved</strong><p class=\"muted\">Explanations appear after you finish the diagnostic.</p></div>";
       } else {
-        const isCorrect = session.selected === question.correctAnswer;
-        const whyWrong = !isCorrect && question.incorrectExplanations && question.incorrectExplanations[session.selected]
-          ? "<p>" + escapeHtml(question.incorrectExplanations[session.selected]) + "</p>"
-          : (!isCorrect ? "<p class=\"muted\">Your choice does not match this scenario as well as the correct answer.</p>" : "");
         const conf = getAppState().prefs.enableConfidence
           ? "<div class=\"chip-row\" style=\"margin-top:10px\"><span class=\"muted\">Confidence (optional)</span>" +
             ["not-sure|Not sure", "somewhat|Somewhat", "confident|Confident"].map(function (pair) {
@@ -388,12 +395,10 @@ var Quiz = (function () {
               return "<button class=\"chip" + (session.confidence === parts[0] ? " is-selected" : "") + "\" data-action=\"confidence\" data-level=\"" + parts[0] + "\">" + parts[1] + "</button>";
             }).join("") + "</div>"
           : "";
-        feedback =
-          "<div class=\"feedback " + (isCorrect ? "ok" : "bad") + "\" role=\"status\" aria-live=\"polite\">" +
-            "<strong>" + (isCorrect ? "Correct ✓" : "Incorrect ✕") + "</strong>" +
-            "<p>" + escapeHtml(question.explanation) + "</p>" +
-            whyWrong + conf +
-          "</div>";
+        const reviewHtml = typeof AnswerReview !== "undefined"
+          ? AnswerReview.renderHtml(question, session.selected)
+          : "";
+        feedback = reviewHtml + conf;
       }
     }
 

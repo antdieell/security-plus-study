@@ -1,10 +1,11 @@
-const CACHE_NAME = "secplus-study-v9";
+const CACHE_NAME = "secplus-study-v11";
 const ASSETS = [
   "./",
   "./index.html",
   "./css/styles.css",
   "./js/utils.js",
   "./js/storage.js",
+  "./js/explanations.js",
   "./js/coverage.js",
   "./js/analytics.js",
   "./js/adaptive.js",
