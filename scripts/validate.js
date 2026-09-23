@@ -273,6 +273,66 @@ assert(multiScore.earned === 2 && multiScore.possible === 4 && !multiScore.corre
 const multiFull = context.PbqEngine.score(multiPart, { parts: [{ s: "x" }, ["a", "b", "c"]] });
 assert(multiFull.correct && multiFull.earned === 4 && multiFull.possible === 4, "multipart full credit still works");
 
+const brokenClassify = context.PbqEngine.validateSpec({
+  kind: "classification",
+  items: [{ id: "x" }],
+  buckets: [{ id: "ok", label: "OK" }],
+  correct: { x: "ok" }
+});
+assert(brokenClassify.length > 0 && brokenClassify.join(" ").indexOf("items[0]") !== -1, "validateSpec flags classification items missing text/label");
+
+(context.PBQ_LAB || []).forEach(function (spec) {
+  const issues = context.PbqEngine.validateSpec(spec, spec.id || "lab");
+  issues.forEach(function (issue) {
+    assert(false, "lab PBQ " + issue);
+  });
+});
+(context.MESSER_PLACEHOLDERS || []).forEach(function (row) {
+  if (!row.pbq) {
+    return;
+  }
+  const issues = context.PbqEngine.validateSpec(row.pbq, row.id);
+  issues.forEach(function (issue) {
+    assert(false, "placeholder PBQ " + issue);
+  });
+});
+
+const privatePath = path.join(root, "private-data", "messer-questions.json");
+if (fs.existsSync(privatePath)) {
+  const privateData = JSON.parse(fs.readFileSync(privatePath, "utf8"));
+  const privateRows = (privateData.questions || privateData || []).filter(function (q) {
+    return q && (q.pbq || q.type === "pbq" || q.questionType === "pbq");
+  });
+  assert(privateRows.length >= 15, "private Messer file should contain 15 PBQs, found " + privateRows.length);
+  ["a", "b", "c"].forEach(function (exam) {
+    for (let n = 1; n <= 5; n += 1) {
+      const id = "messer-" + exam + "-00" + n;
+      const row = privateRows.filter(function (q) { return q.id === id; })[0];
+      assert(!!row, "missing private PBQ " + id);
+      if (row && row.pbq) {
+        const issues = context.PbqEngine.validateSpec(row.pbq, id);
+        issues.forEach(function (issue) {
+          assert(false, issue);
+        });
+      }
+    }
+  });
+  const c1 = privateRows.filter(function (q) { return q.id === "messer-c-001"; })[0];
+  const c1Texts = ((c1 && c1.pbq && c1.pbq.items) || []).map(function (item) {
+    return String((item && (item.text || item.label)) || "");
+  });
+  [
+    "Use a secure terminal to connect to 10.1.10.88",
+    "Share the desktop on server 10.1.10.120",
+    "Perform a DNS query from 10.1.10.88 to 9.9.9.9",
+    "View web pages on 10.1.10.120",
+    "Authenticate to an LDAP server at 10.1.10.61",
+    "Synchronize the clock on a server at 10.1.10.17"
+  ].forEach(function (label) {
+    assert(c1Texts.indexOf(label) !== -1, "messer-c-001 missing traffic-flow label");
+  });
+}
+
 context.QuestionBank.setExtra(context.MESSER_PLACEHOLDERS);
 
 const v2 = JSON.parse(JSON.stringify(migrated));

@@ -5,6 +5,37 @@
  * Touch-first: tap-to-match is the default pairing method; HTML5 drag is optional.
  */
 var PbqEngine = (function () {
+  function displayText(value) {
+    if (value == null) {
+      return "";
+    }
+    if (typeof value === "object") {
+      return "";
+    }
+    return String(value);
+  }
+
+  function itemLabel(item) {
+    if (!item || typeof item !== "object") {
+      return "";
+    }
+    return displayText(item.text || item.label || item.prompt || item.name);
+  }
+
+  function optionLabel(opt) {
+    if (typeof opt === "string" || typeof opt === "number") {
+      return String(opt);
+    }
+    return itemLabel(opt);
+  }
+
+  function optionId(opt) {
+    if (typeof opt === "string" || typeof opt === "number") {
+      return String(opt);
+    }
+    return opt && opt.id != null ? String(opt.id) : "";
+  }
+
   function el(html) {
     const wrap = document.createElement("div");
     wrap.innerHTML = html;
@@ -36,7 +67,7 @@ var PbqEngine = (function () {
     const leftCol = el("<div class=\"stack\"></div>");
     const rightCol = el("<div class=\"stack\"></div>");
     left.forEach(function (item) {
-      const btn = el("<button type=\"button\" class=\"option\" data-pbq-left=\"" + escapeHtml(item.id) + "\"><span>" + escapeHtml(item.text) + "</span><span class=\"muted\">" + escapeHtml(pairs[item.id] ? " → matched" : "") + "</span></button>");
+      const btn = el("<button type=\"button\" class=\"option\" data-pbq-left=\"" + escapeHtml(item.id) + "\"><span>" + escapeHtml(itemLabel(item)) + "</span><span class=\"muted\">" + escapeHtml(pairs[item.id] ? " → matched" : "") + "</span></button>");
       if (state.selectedLeft === item.id) {
         btn.classList.add("is-selected");
       }
@@ -44,7 +75,7 @@ var PbqEngine = (function () {
     });
     right.forEach(function (item) {
       const used = Object.keys(pairs).some(function (k) { return pairs[k] === item.id; });
-      const btn = el("<button type=\"button\" class=\"option\" data-pbq-right=\"" + escapeHtml(item.id) + "\">" + escapeHtml(item.text) + (used ? " ✓" : "") + "</button>");
+      const btn = el("<button type=\"button\" class=\"option\" data-pbq-right=\"" + escapeHtml(item.id) + "\">" + escapeHtml(itemLabel(item)) + (used ? " ✓" : "") + "</button>");
       rightCol.appendChild(btn);
     });
     grid.appendChild(leftCol);
@@ -71,13 +102,13 @@ var PbqEngine = (function () {
   function renderDropdown(root, spec, state) {
     state.answer = state.answer || {};
     (spec.stems || []).forEach(function (stem) {
-      const row = el("<label class=\"custom-field\">" + escapeHtml(stem.text) + "<select data-pbq-stem=\"" + escapeHtml(stem.id) + "\"></select></label>");
+      const row = el("<label class=\"custom-field\">" + escapeHtml(itemLabel(stem)) + "<select data-pbq-stem=\"" + escapeHtml(stem.id) + "\"></select></label>");
       const select = row.querySelector("select");
       select.disabled = !!state.disabled;
       select.appendChild(el("<option value=\"\">Choose…</option>"));
       (stem.options || spec.options || []).forEach(function (opt) {
-        const id = typeof opt === "string" ? opt : opt.id;
-        const text = typeof opt === "string" ? opt : opt.text;
+        const id = optionId(opt);
+        const text = optionLabel(opt);
         const option = el("<option value=\"" + escapeHtml(id) + "\">" + escapeHtml(text) + "</option>");
         if (state.answer[stem.id] === id) {
           option.selected = true;
@@ -95,12 +126,12 @@ var PbqEngine = (function () {
     state.answer = state.answer || {};
     const buckets = spec.buckets || [];
     (spec.items || []).forEach(function (item) {
-      const row = el("<label class=\"custom-field\">" + escapeHtml(item.text) + "<select data-pbq-item=\"" + escapeHtml(item.id) + "\"></select></label>");
+      const row = el("<label class=\"custom-field\">" + escapeHtml(itemLabel(item)) + "<select data-pbq-item=\"" + escapeHtml(item.id) + "\"></select></label>");
       const select = row.querySelector("select");
       select.disabled = !!state.disabled;
       select.appendChild(el("<option value=\"\">Classify…</option>"));
       buckets.forEach(function (bucket) {
-        const option = el("<option value=\"" + escapeHtml(bucket.id) + "\">" + escapeHtml(bucket.label || bucket.text) + "</option>");
+        const option = el("<option value=\"" + escapeHtml(bucket.id) + "\">" + escapeHtml(itemLabel(bucket)) + "</option>");
         if (state.answer[item.id] === bucket.id) {
           option.selected = true;
         }
@@ -120,7 +151,7 @@ var PbqEngine = (function () {
     const list = el("<div class=\"stack pbq-order\"></div>");
     state.answer.forEach(function (id, index) {
       const item = (spec.items || []).filter(function (row) { return row.id === id; })[0];
-      const row = el("<div class=\"option\" style=\"align-items:center\"><span>" + (index + 1) + ". " + escapeHtml(item ? item.text : id) + "</span></div>");
+      const row = el("<div class=\"option\" style=\"align-items:center\"><span>" + (index + 1) + ". " + escapeHtml(item ? itemLabel(item) : id) + "</span></div>");
       if (!state.disabled) {
         const up = el("<button type=\"button\" class=\"chip\" data-pbq-move=\"-1\" data-index=\"" + index + "\">Up</button>");
         const down = el("<button type=\"button\" class=\"chip\" data-pbq-move=\"1\" data-index=\"" + index + "\">Down</button>");
@@ -178,7 +209,7 @@ var PbqEngine = (function () {
     state.answer = state.answer || {};
     const board = el("<div class=\"pbq-diagram card\"></div>");
     (spec.nodes || []).forEach(function (node) {
-      const btn = el("<button type=\"button\" class=\"chip\" data-pbq-node=\"" + escapeHtml(node.id) + "\">" + escapeHtml(node.label) + "</button>");
+      const btn = el("<button type=\"button\" class=\"chip\" data-pbq-node=\"" + escapeHtml(node.id) + "\">" + escapeHtml(itemLabel(node) || displayText(node.label)) + "</button>");
       if (state.selectedNode === node.id) {
         btn.classList.add("is-selected");
       }
@@ -186,12 +217,12 @@ var PbqEngine = (function () {
     });
     root.appendChild(board);
     (spec.prompts || []).forEach(function (prompt) {
-      const row = el("<label class=\"custom-field\">" + escapeHtml(prompt.text) + "<select data-pbq-prompt=\"" + escapeHtml(prompt.id) + "\"></select></label>");
+      const row = el("<label class=\"custom-field\">" + escapeHtml(itemLabel(prompt)) + "<select data-pbq-prompt=\"" + escapeHtml(prompt.id) + "\"></select></label>");
       const select = row.querySelector("select");
       select.disabled = !!state.disabled;
       select.appendChild(el("<option value=\"\">Choose…</option>"));
       (prompt.options || []).forEach(function (opt) {
-        const option = el("<option value=\"" + escapeHtml(opt.id) + "\">" + escapeHtml(opt.text) + "</option>");
+        const option = el("<option value=\"" + escapeHtml(optionId(opt)) + "\">" + escapeHtml(optionLabel(opt)) + "</option>");
         if (state.answer[prompt.id] === opt.id) {
           option.selected = true;
         }
@@ -318,7 +349,7 @@ var PbqEngine = (function () {
     let config = "";
     if (kind === "ordering") {
       const labels = {};
-      (spec.items || []).forEach(function (item) { labels[item.id] = item.text; });
+      (spec.items || []).forEach(function (item) { labels[item.id] = itemLabel(item); });
       const expected = spec.correctOrder || [];
       const got = Array.isArray(answer) ? answer : [];
       config = "<p>Correct order: " + expected.map(function (id, i) {
@@ -345,10 +376,191 @@ var PbqEngine = (function () {
     return "<p><strong>PBQ-style practice score: " + result.percent + "%</strong> (" + result.earned + "/" + result.possible + ")</p>" + config;
   }
 
+  function validateSpec(spec, path) {
+    const issues = [];
+    function fail(where, message) {
+      issues.push((path || "pbq") + (where ? " " + where : "") + ": " + message);
+    }
+    function hasId(obj) {
+      return !!(obj && obj.id != null && String(obj.id).trim() !== "");
+    }
+    function hasVisible(obj) {
+      return !!(obj && itemLabel(obj).trim());
+    }
+    if (!spec || typeof spec !== "object") {
+      fail("", "missing spec");
+      return issues;
+    }
+    const kind = spec.kind || spec.type;
+    if (!kind) {
+      fail("", "missing kind");
+      return issues;
+    }
+    if (kind === "matching" || kind === "tap-match") {
+      const left = spec.left || spec.items || [];
+      const right = spec.right || spec.choices || [];
+      if (!left.length) {
+        fail("", "needs left or items");
+      }
+      if (!right.length) {
+        fail("", "needs right or choices");
+      }
+      left.forEach(function (item, i) {
+        if (!hasId(item) || !hasVisible(item)) {
+          fail("left[" + i + "]", "needs id and text/label");
+        }
+      });
+      right.forEach(function (item, i) {
+        if (!hasId(item) || !hasVisible(item)) {
+          fail("right[" + i + "]", "needs id and text/label");
+        }
+      });
+      const correct = spec.correct || {};
+      if (!Object.keys(correct).length) {
+        fail("", "needs correct map");
+      }
+      Object.keys(correct).forEach(function (key) {
+        if (!left.some(function (item) { return item && item.id === key; })) {
+          fail("correct." + key, "left id not found");
+        }
+        if (!right.some(function (item) { return item && item.id === correct[key]; })) {
+          fail("correct." + key, "right id not found");
+        }
+      });
+    } else if (kind === "dropdown" || kind === "select") {
+      if (!(spec.stems || []).length) {
+        fail("", "needs stems");
+      }
+      (spec.stems || []).forEach(function (stem, i) {
+        if (!hasId(stem) || !hasVisible(stem)) {
+          fail("stems[" + i + "]", "needs id and text/label");
+        }
+        const opts = stem.options || spec.options || [];
+        if (!opts.length) {
+          fail("stems[" + i + "]", "needs options");
+        }
+        opts.forEach(function (opt, j) {
+          if (!optionId(opt) || !String(optionLabel(opt)).trim()) {
+            fail("stems[" + i + "].options[" + j + "]", "needs id and text");
+          }
+        });
+      });
+      if (!spec.correct || !Object.keys(spec.correct).length) {
+        fail("", "needs correct map");
+      }
+    } else if (kind === "classification" || kind === "categorization") {
+      if (!(spec.items || []).length) {
+        fail("", "needs items");
+      }
+      if (!(spec.buckets || []).length) {
+        fail("", "needs buckets");
+      }
+      (spec.items || []).forEach(function (item, i) {
+        if (!hasId(item) || !hasVisible(item)) {
+          fail("items[" + i + "]", "needs id and text/label");
+        }
+      });
+      (spec.buckets || []).forEach(function (bucket, i) {
+        if (!hasId(bucket) || !hasVisible(bucket)) {
+          fail("buckets[" + i + "]", "needs id and label/text");
+        }
+      });
+      if (!spec.correct || !Object.keys(spec.correct).length) {
+        fail("", "needs correct map");
+      }
+      Object.keys(spec.correct || {}).forEach(function (key) {
+        if (!(spec.items || []).some(function (item) { return item && item.id === key; })) {
+          fail("correct." + key, "item id not found");
+        }
+        if (!(spec.buckets || []).some(function (bucket) { return bucket && bucket.id === spec.correct[key]; })) {
+          fail("correct." + key, "bucket id not found");
+        }
+      });
+    } else if (kind === "ordering") {
+      if (!(spec.items || []).length) {
+        fail("", "needs items");
+      }
+      (spec.items || []).forEach(function (item, i) {
+        if (!hasId(item) || !hasVisible(item)) {
+          fail("items[" + i + "]", "needs id and text/label");
+        }
+      });
+      if (!Array.isArray(spec.correctOrder) || !spec.correctOrder.length) {
+        fail("", "needs correctOrder");
+      } else {
+        spec.correctOrder.forEach(function (id, i) {
+          if (!(spec.items || []).some(function (item) { return item && item.id === id; })) {
+            fail("correctOrder[" + i + "]", "item id not found");
+          }
+        });
+      }
+    } else if (kind === "firewall" || kind === "acl") {
+      if (!(spec.slots || []).length) {
+        fail("", "needs slots");
+      }
+      (spec.slots || []).forEach(function (slot, i) {
+        if (!hasId(slot)) {
+          fail("slots[" + i + "]", "needs id");
+        }
+      });
+      if (!spec.fieldOptions || !Object.keys(spec.fieldOptions).length) {
+        fail("", "needs fieldOptions");
+      }
+      Object.keys(spec.fieldOptions || {}).forEach(function (field) {
+        (spec.fieldOptions[field] || []).forEach(function (choice, j) {
+          if (!displayText(choice).trim() || typeof choice === "object") {
+            fail("fieldOptions." + field + "[" + j + "]", "needs a string choice");
+          }
+        });
+      });
+      if (!spec.correct || !Object.keys(spec.correct).length) {
+        fail("", "needs correct");
+      }
+    } else if (kind === "diagram") {
+      (spec.nodes || []).forEach(function (node, i) {
+        if (!hasId(node) || !hasVisible(node)) {
+          fail("nodes[" + i + "]", "needs id and label/text");
+        }
+      });
+      if (!(spec.prompts || []).length) {
+        fail("", "needs prompts");
+      }
+      (spec.prompts || []).forEach(function (prompt, i) {
+        if (!hasId(prompt) || !hasVisible(prompt)) {
+          fail("prompts[" + i + "]", "needs id and text/label");
+        }
+        if (!(prompt.options || []).length) {
+          fail("prompts[" + i + "]", "needs options");
+        }
+        (prompt.options || []).forEach(function (opt, j) {
+          if (!optionId(opt) || !String(optionLabel(opt)).trim()) {
+            fail("prompts[" + i + "].options[" + j + "]", "needs id and text");
+          }
+        });
+      });
+      if (!spec.correct || !Object.keys(spec.correct).length) {
+        fail("", "needs correct map");
+      }
+    } else if (kind === "multipart") {
+      if (!(spec.parts || []).length) {
+        fail("", "needs parts");
+      }
+      (spec.parts || []).forEach(function (part, i) {
+        validateSpec(part, (path || "pbq") + ".parts[" + i + "]").forEach(function (issue) {
+          issues.push(issue);
+        });
+      });
+    } else {
+      fail("", "unsupported kind " + kind);
+    }
+    return issues;
+  }
+
   return {
     render: render,
     getAnswer: getAnswer,
     score: score,
-    reviewHtml: reviewHtml
+    reviewHtml: reviewHtml,
+    validateSpec: validateSpec
   };
 })();

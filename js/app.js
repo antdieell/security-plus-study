@@ -495,7 +495,7 @@ var App = (function () {
     if (!("serviceWorker" in navigator) || location.protocol === "file:") {
       return;
     }
-    navigator.serviceWorker.register("./service-worker.js?v=16", { scope: "./" }).catch(function () {});
+    navigator.serviceWorker.register("./service-worker.js?v=17", { scope: "./" }).catch(function () {});
   }
 
   function revealApp() {

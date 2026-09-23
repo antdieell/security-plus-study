@@ -1,4 +1,4 @@
-const CACHE_NAME = "secplus-study-v16";
+const CACHE_NAME = "secplus-study-v17";
 const ASSETS = [
   "./",
   "./index.html",
