@@ -297,41 +297,70 @@ assert(brokenClassify.length > 0 && brokenClassify.join(" ").indexOf("items[0]")
   });
 });
 
-const privatePath = path.join(root, "private-data", "messer-questions.json");
-if (fs.existsSync(privatePath)) {
-  const privateData = JSON.parse(fs.readFileSync(privatePath, "utf8"));
-  const privateRows = (privateData.questions || privateData || []).filter(function (q) {
-    return q && (q.pbq || q.type === "pbq" || q.questionType === "pbq");
-  });
-  assert(privateRows.length >= 15, "private Messer file should contain 15 PBQs, found " + privateRows.length);
-  ["a", "b", "c"].forEach(function (exam) {
-    for (let n = 1; n <= 5; n += 1) {
-      const id = "messer-" + exam + "-00" + n;
-      const row = privateRows.filter(function (q) { return q.id === id; })[0];
-      assert(!!row, "missing private PBQ " + id);
-      if (row && row.pbq) {
-        const issues = context.PbqEngine.validateSpec(row.pbq, id);
-        issues.forEach(function (issue) {
-          assert(false, issue);
-        });
-      }
+const brokenBank = context.QuestionBank.validateMesserBank([{ id: "bad", question: "PLACEHOLDER x", exam: "A" }]);
+assert(!brokenBank.ok, "validateMesserBank rejects placeholder/short banks");
+
+const deployedPath = path.join(root, "data", "messer-questions.json");
+assert(fs.existsSync(deployedPath), "data/messer-questions.json must exist for GitHub Pages");
+const deployedData = JSON.parse(fs.readFileSync(deployedPath, "utf8"));
+const deployedRows = deployedData.questions || deployedData || [];
+const bankCheck = context.QuestionBank.validateMesserBank(deployedRows);
+assert(bankCheck.ok, "deployed Messer bank invalid: " + bankCheck.issues.slice(0, 8).join(" | "));
+assert(deployedRows.length === 270, "deployed Messer bank must have 270 records");
+
+const typeCounts = { mc: 0, ms: 0, pbq: 0 };
+const deployedPbqs = [];
+deployedRows.forEach(function (q) {
+  const type = q.questionType || q.type || "multiple-choice";
+  if (q.placeholder || /^PLACEHOLDER\b/i.test(String(q.question || ""))) {
+    assert(false, (q.id || "row") + " is a placeholder in the deployed bank");
+  }
+  if (type === "pbq" || q.pbq) {
+    typeCounts.pbq += 1;
+    deployedPbqs.push(q);
+  } else if (type === "multiple-select" || type === "multi-select") {
+    typeCounts.ms += 1;
+  } else {
+    typeCounts.mc += 1;
+  }
+});
+assert(typeCounts.mc === 246, "expected 246 single-answer Messer items, found " + typeCounts.mc);
+assert(typeCounts.ms === 9, "expected 9 multiple-select Messer items, found " + typeCounts.ms);
+assert(typeCounts.pbq === 15, "expected 15 Messer PBQs, found " + typeCounts.pbq);
+
+["a", "b", "c"].forEach(function (exam) {
+  for (let n = 1; n <= 5; n += 1) {
+    const id = "messer-" + exam + "-00" + n;
+    const row = deployedPbqs.filter(function (q) { return q.id === id; })[0];
+    assert(!!row, "missing Messer PBQ " + id);
+    if (row && row.pbq) {
+      const issues = context.PbqEngine.validateSpec(row.pbq, id);
+      issues.forEach(function (issue) {
+        assert(false, issue);
+      });
+      const items = row.pbq.items || row.pbq.left || row.pbq.stems || [];
+      items.forEach(function (item, index) {
+        const label = item && (item.text || item.label || item.prompt || item.name);
+        assert(typeof label === "string" && label.trim() && label !== "undefined", id + " items[" + index + "] missing usable text");
+      });
     }
-  });
-  const c1 = privateRows.filter(function (q) { return q.id === "messer-c-001"; })[0];
-  const c1Texts = ((c1 && c1.pbq && c1.pbq.items) || []).map(function (item) {
-    return String((item && (item.text || item.label)) || "");
-  });
-  [
-    "Use a secure terminal to connect to 10.1.10.88",
-    "Share the desktop on server 10.1.10.120",
-    "Perform a DNS query from 10.1.10.88 to 9.9.9.9",
-    "View web pages on 10.1.10.120",
-    "Authenticate to an LDAP server at 10.1.10.61",
-    "Synchronize the clock on a server at 10.1.10.17"
-  ].forEach(function (label) {
-    assert(c1Texts.indexOf(label) !== -1, "messer-c-001 missing traffic-flow label");
-  });
-}
+  }
+});
+const c1 = deployedPbqs.filter(function (q) { return q.id === "messer-c-001"; })[0];
+const c1Texts = ((c1 && c1.pbq && c1.pbq.items) || []).map(function (item) {
+  return String((item && (item.text || item.label)) || "");
+});
+[
+  "Use a secure terminal to connect to 10.1.10.88",
+  "Share the desktop on server 10.1.10.120",
+  "Perform a DNS query from 10.1.10.88 to 9.9.9.9",
+  "View web pages on 10.1.10.120",
+  "Authenticate to an LDAP server at 10.1.10.61",
+  "Synchronize the clock on a server at 10.1.10.17"
+].forEach(function (label) {
+  assert(c1Texts.indexOf(label) !== -1, "messer-c-001 missing traffic-flow label");
+});
+assert(c1 && c1.pbq && c1.pbq.rulesTable && Array.isArray(c1.pbq.rulesTable.rows) && c1.pbq.rulesTable.rows.length >= 6, "messer-c-001 must include a firewall rules table");
 
 context.QuestionBank.setExtra(context.MESSER_PLACEHOLDERS);
 

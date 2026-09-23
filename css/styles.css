@@ -1283,6 +1283,23 @@ body:not(.is-locked) .site-gate {
   min-height: var(--touch);
 }
 
+.pbq-stimulus {
+  overflow-x: auto;
+}
+
+.pbq-rules-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+
+.pbq-rules-table th,
+.pbq-rules-table td {
+  border: 1px solid var(--border);
+  padding: 8px;
+  text-align: left;
+}
+
 .pbq-part {
   margin-top: 12px;
 }

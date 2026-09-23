@@ -75,7 +75,7 @@ node scripts/auditQuestions.js
 security-plus-study/
 ├── index.html
 ├── manifest.json
-├── service-worker.js          cache secplus-study-v9
+├── service-worker.js          cache secplus-study-v19
 ├── css/styles.css
 ├── js/
 │   ├── app.js                 Home, Practice, Review, journal, routing
@@ -92,6 +92,7 @@ security-plus-study/
 ├── data/
 │   ├── objectives.js          Official SY0-701 hierarchy
 │   ├── questions.js           sq0001+ replacement bank + enricher
+│   ├── messer-questions.json  Professor Messer Exams A/B/C (270 items)
 │   ├── pbqs.js / pbqs-v3.js
 │   └── ...
 └── scripts/
@@ -213,6 +214,6 @@ Settings → **Export progress** downloads `sec-plus-study-backup-YYYY-MM-DD.jso
 
 ## Offline PWA
 
-`service-worker.js` cache name is `secplus-study-v15`. HTML and JS/CSS/`data/` use network-first so upgrades are not stuck on a stale shell; other assets stay cache-first. After the first HTTP visit, the question bank and core study features work offline. The service worker is scoped to this folder so a GitHub Pages project URL (`/security-plus-study/`) works.
+`service-worker.js` cache name is `secplus-study-v19`. HTML and JS/CSS/`data/` use network-first so upgrades are not stuck on a stale shell. `data/messer-questions.json` is also network-first (successful responses only are cached) so an old 404 or demo cache cannot override the real bank. Other assets stay cache-first. After the first HTTP visit, the question bank and core study features work offline. The service worker is scoped to this folder so a GitHub Pages project URL (`/security-plus-study/`) works.
 
 Bump `CACHE_NAME` whenever HTML/JS/data files change.

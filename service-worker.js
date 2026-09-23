@@ -1,4 +1,4 @@
-const CACHE_NAME = "secplus-study-v17";
+const CACHE_NAME = "secplus-study-v19";
 const ASSETS = [
   "./",
   "./index.html",
@@ -35,6 +35,7 @@ const ASSETS = [
   "./data/pbqs-v3.js",
   "./data/pbq-lab.js",
   "./data/messer-placeholders.js",
+  "./data/messer-questions.json",
   "./data/ports.js",
   "./data/acronyms.js",
   "./manifest.json",
@@ -47,6 +48,15 @@ function matchCached(request) {
   return caches.match(request).then(function (cached) {
     return cached || caches.match(request, { ignoreSearch: true });
   });
+}
+
+function cacheIfOk(request, response) {
+  if (response && response.ok) {
+    const copy = response.clone();
+    caches.open(CACHE_NAME).then(function (cache) {
+      cache.put(request, copy);
+    });
+  }
 }
 
 self.addEventListener("install", function (event) {
@@ -81,15 +91,24 @@ self.addEventListener("fetch", function (event) {
   if (url.origin !== self.location.origin) {
     return;
   }
+  const isMesserBank = /messer-questions\.json$/i.test(url.pathname);
+  if (isMesserBank) {
+    event.respondWith(
+      fetch(event.request).then(function (response) {
+        cacheIfOk(event.request, response);
+        return response;
+      }).catch(function () {
+        return matchCached(event.request);
+      })
+    );
+    return;
+  }
   const isNavigate = event.request.mode === "navigate" || url.pathname === "/" || url.pathname.endsWith("/") || url.pathname.endsWith(".html");
   const isCode = /\.(js|css)$/.test(url.pathname) || url.pathname.indexOf("/data/") !== -1;
   if (isNavigate || isCode) {
     event.respondWith(
       fetch(event.request).then(function (response) {
-        const copy = response.clone();
-        caches.open(CACHE_NAME).then(function (cache) {
-          cache.put(event.request, copy);
-        });
+        cacheIfOk(event.request, response);
         return response;
       }).catch(function () {
         return matchCached(event.request).then(function (cached) {
@@ -105,10 +124,7 @@ self.addEventListener("fetch", function (event) {
         return cached;
       }
       return fetch(event.request).then(function (response) {
-        const copy = response.clone();
-        caches.open(CACHE_NAME).then(function (cache) {
-          cache.put(event.request, copy);
-        });
+        cacheIfOk(event.request, response);
         return response;
       }).catch(function () {
         return caches.match("./index.html");

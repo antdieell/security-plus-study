@@ -1,7 +1,7 @@
 /**
  * FAKE placeholder items so the Messer A/B/C UI can be exercised.
- * Not purchased Professor Messer content. Replace via private-data/messer-questions.json
- * after authentication on the deployed host.
+ * Not purchased Professor Messer content. Used only if data/messer-questions.json
+ * fails to load. Never mixed into a successful 270-question bank.
  */
 var MESSER_PLACEHOLDERS = [
   {

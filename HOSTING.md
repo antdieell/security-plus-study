@@ -12,13 +12,13 @@ GitHub Pages serves it from:
 
 `https://antdieell.github.io/security-plus-study/`
 
-No Cloudflare. No Supabase. No extra hosting account. No Node server after deploy. Local preview is optional (`python -m http.server` or open `index.html`).
+The public app and the Professor Messer JSON both live on GitHub Pages as static files. The Messer bank is `data/messer-questions.json`. Local preview: `python -m http.server`.
 
 ## This is not secure storage
 
-GitHub Pages is static hosting. The password screen stops casual visitors. It does **not** stop someone technical from downloading or inspecting deployed files, including JavaScript, the question bank, and the password hash.
+GitHub Pages is static hosting. The password screen stops casual visitors. It does **not** stop someone technical from downloading or inspecting deployed files, including JavaScript, the question banks, and the password hash.
 
-Do not treat this as a vault for purchased Professor Messer PDFs or other licensed material. Keep purchased imports gitignored (`private-data/messer-questions.json`) and do not commit them.
+Anyone who can fetch the deployed site can also fetch `data/messer-questions.json`. Keep purchased PDFs and work-in-progress copies gitignored under `private-data/`.
 
 ## How to set your password
 

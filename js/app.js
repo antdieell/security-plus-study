@@ -109,9 +109,10 @@ var App = (function () {
       "</div>" +
       "<h2 class=\"section-title\">Question sources</h2>" +
       "<div class=\"stack\">" +
-        "<button class=\"card card-button\" data-home=\"messer-a\"><strong>Professor Messer Exam A</strong><span class=\"muted\" style=\"display:block;margin-top:6px\">90-question practice exam (placeholders until private import)</span></button>" +
-        "<button class=\"card card-button\" data-home=\"messer-b\"><strong>Professor Messer Exam B</strong><span class=\"muted\" style=\"display:block;margin-top:6px\">90-question practice exam (placeholders until private import)</span></button>" +
-        "<button class=\"card card-button\" data-home=\"messer-c\"><strong>Professor Messer Exam C</strong><span class=\"muted\" style=\"display:block;margin-top:6px\">90-question practice exam (placeholders until private import)</span></button>" +
+        (typeof QuestionBank !== "undefined" && QuestionBank.statusBannerHtml ? QuestionBank.statusBannerHtml() : "") +
+        "<button class=\"card card-button\" data-home=\"messer-a\"><strong>Professor Messer Exam A</strong><span class=\"muted\" style=\"display:block;margin-top:6px\">" + (typeof QuestionBank !== "undefined" ? QuestionBank.examLine("A") : "DEMO — not the real 90-question exam") + "</span></button>" +
+        "<button class=\"card card-button\" data-home=\"messer-b\"><strong>Professor Messer Exam B</strong><span class=\"muted\" style=\"display:block;margin-top:6px\">" + (typeof QuestionBank !== "undefined" ? QuestionBank.examLine("B") : "DEMO — not the real 90-question exam") + "</span></button>" +
+        "<button class=\"card card-button\" data-home=\"messer-c\"><strong>Professor Messer Exam C</strong><span class=\"muted\" style=\"display:block;margin-top:6px\">" + (typeof QuestionBank !== "undefined" ? QuestionBank.examLine("C") : "DEMO — not the real 90-question exam") + "</span></button>" +
         "<button class=\"card card-button\" data-home=\"mixed\"><strong>Mixed Practice</strong><span class=\"muted\" style=\"display:block;margin-top:6px\">Current Study Bank plus Messer overlay</span></button>" +
       "</div>" +
       "<h2 class=\"section-title\">Review due</h2>" +
@@ -495,7 +496,7 @@ var App = (function () {
     if (!("serviceWorker" in navigator) || location.protocol === "file:") {
       return;
     }
-    navigator.serviceWorker.register("./service-worker.js?v=17", { scope: "./" }).catch(function () {});
+    navigator.serviceWorker.register("./service-worker.js?v=19", { scope: "./" }).catch(function () {});
   }
 
   function revealApp() {

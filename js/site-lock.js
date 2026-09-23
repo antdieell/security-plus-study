@@ -147,7 +147,9 @@ var SiteLock = (function () {
         submit.disabled = true;
         submit.textContent = "Checking…";
       }
-      unlock(input.value, !!(rememberBox && rememberBox.checked)).then(function (ok) {
+      const entered = input.value;
+      const remember = !!(rememberBox && rememberBox.checked);
+      unlock(entered, remember).then(function (ok) {
         input.value = "";
         if (!ok) {
           if (error) {

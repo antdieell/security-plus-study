@@ -376,13 +376,12 @@ var Quiz = (function () {
 
   function sourceChooserHtml() {
     const counts = typeof QuestionBank !== "undefined" ? QuestionBank.counts() : { original: QUESTIONS.length, messer: 0, A: 0, B: 0, C: 0 };
-    const placeholder = counts.messer > 0 && counts.A < 90;
     return "<div class=\"card stack\" style=\"margin-bottom:4px\">" +
       "<strong>Question source</strong>" +
-      "<p class=\"muted\" style=\"margin:0\">Current Study Bank stays the default. Professor Messer exams use placeholder items until private data is deployed.</p>" +
-      "<button class=\"card card-button\" data-action=\"messer-a\"><strong>Professor Messer · Exam A</strong><span class=\"muted\" style=\"display:block;margin-top:6px\">" + counts.A + " questions" + (placeholder ? " (placeholders)" : "") + "</span></button>" +
-      "<button class=\"card card-button\" data-action=\"messer-b\"><strong>Professor Messer · Exam B</strong><span class=\"muted\" style=\"display:block;margin-top:6px\">" + counts.B + " questions" + (placeholder ? " (placeholders)" : "") + "</span></button>" +
-      "<button class=\"card card-button\" data-action=\"messer-c\"><strong>Professor Messer · Exam C</strong><span class=\"muted\" style=\"display:block;margin-top:6px\">" + counts.C + " questions" + (placeholder ? " (placeholders)" : "") + "</span></button>" +
+      (typeof QuestionBank !== "undefined" && QuestionBank.statusBannerHtml ? QuestionBank.statusBannerHtml() : "") +
+      "<button class=\"card card-button\" data-action=\"messer-a\"><strong>Professor Messer · Exam A</strong><span class=\"muted\" style=\"display:block;margin-top:6px\">" + (typeof QuestionBank !== "undefined" ? QuestionBank.examLine("A") : counts.A + " questions") + "</span></button>" +
+      "<button class=\"card card-button\" data-action=\"messer-b\"><strong>Professor Messer · Exam B</strong><span class=\"muted\" style=\"display:block;margin-top:6px\">" + (typeof QuestionBank !== "undefined" ? QuestionBank.examLine("B") : counts.B + " questions") + "</span></button>" +
+      "<button class=\"card card-button\" data-action=\"messer-c\"><strong>Professor Messer · Exam C</strong><span class=\"muted\" style=\"display:block;margin-top:6px\">" + (typeof QuestionBank !== "undefined" ? QuestionBank.examLine("C") : counts.C + " questions") + "</span></button>" +
       "<button class=\"card card-button\" data-action=\"mixed\"><strong>Mixed Practice</strong><span class=\"muted\" style=\"display:block;margin-top:6px\">Study Bank + Messer overlay</span></button>" +
     "</div>";
   }

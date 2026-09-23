@@ -246,6 +246,40 @@ var PbqEngine = (function () {
     });
   }
 
+  function renderStimulus(host, spec) {
+    if (spec.rulesTable && Array.isArray(spec.rulesTable.rows) && spec.rulesTable.rows.length) {
+      const cols = spec.rulesTable.columns || [];
+      const table = el("<table class=\"pbq-rules-table\"></table>");
+      if (cols.length) {
+        const head = el("<thead></thead>");
+        const row = el("<tr></tr>");
+        cols.forEach(function (col) {
+          row.appendChild(el("<th>" + escapeHtml(col) + "</th>"));
+        });
+        head.appendChild(row);
+        table.appendChild(head);
+      }
+      const body = el("<tbody></tbody>");
+      spec.rulesTable.rows.forEach(function (cells) {
+        const row = el("<tr></tr>");
+        (cells || []).forEach(function (cell) {
+          row.appendChild(el("<td>" + escapeHtml(cell) + "</td>"));
+        });
+        body.appendChild(row);
+      });
+      table.appendChild(body);
+      const wrap = el("<div class=\"card pbq-stimulus\"></div>");
+      wrap.appendChild(el("<p><strong>Firewall rules</strong></p>"));
+      wrap.appendChild(table);
+      host.appendChild(wrap);
+      return;
+    }
+    const text = spec.stimulus || spec.context || spec.passage;
+    if (text) {
+      host.appendChild(el("<div class=\"card pbq-stimulus\"><pre>" + escapeHtml(text) + "</pre></div>"));
+    }
+  }
+
   function render(host, spec, state) {
     state = state || {};
     if (state.saved && !state.answer) {
@@ -257,6 +291,7 @@ var PbqEngine = (function () {
     state.host = host;
     host.innerHTML = "";
     host.className = (host.className || "").replace(/\s*pbq-engine\s*/g, " ").trim() + " pbq-engine";
+    renderStimulus(host, spec);
     const kind = spec.kind || spec.type;
     if (kind === "matching" || kind === "tap-match") {
       renderMatching(host, spec, state);
