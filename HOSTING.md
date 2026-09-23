@@ -1,56 +1,43 @@
-# Single-password private hosting
+# Hosting: GitHub Pages + a casual password gate
 
-The study app is no longer meant to sit open on GitHub Pages. GitHub can stay the source repo. The live site is a **Cloudflare Pages** project with a Function that blocks every request until the site password is accepted.
-
-## Why this host
-
-- One password, no email, no username, no signup
-- Home PC can be off — Cloudflare serves the site
-- Free for a single-user study app
-- The gate runs on the server, not in public JavaScript
-- HttpOnly session cookie after a correct password
-
-## 1. Create a Cloudflare account
-
-1. Open [https://dash.cloudflare.com/sign-up](https://dash.cloudflare.com/sign-up)
-2. Create a free account
-3. In **Workers & Pages**, create a **Pages** project connected to this GitHub repo, or deploy from your computer with Wrangler
-
-## 2. Set secrets (never put these in Git)
-
-Pages → project → **Settings → Environment variables** (Production):
-
-| Name | Value |
-| --- | --- |
-| `SITE_PASSWORD` | the one site password |
-| `SESSION_SECRET` | a long random string (password manager or `openssl rand -hex 32`) |
-
-Encrypt / hide both.
-
-## 3. Local test
+This is a **static** site. Deploy with:
 
 ```powershell
-copy .dev.vars.example .dev.vars
+git add .
+git commit -m "your message"
+git push
 ```
 
-Edit `.dev.vars` with a temporary password and session secret.
+GitHub Pages serves it from:
+
+`https://antdieell.github.io/security-plus-study/`
+
+No Cloudflare. No Supabase. No extra hosting account. No Node server after deploy. Local preview is optional (`python -m http.server` or open `index.html`).
+
+## This is not secure storage
+
+GitHub Pages is static hosting. The password screen stops casual visitors. It does **not** stop someone technical from downloading or inspecting deployed files, including JavaScript, the question bank, and the password hash.
+
+Do not treat this as a vault for purchased Professor Messer PDFs or other licensed material. Keep purchased imports gitignored (`private-data/messer-questions.json`) and do not commit them.
+
+## How to set your password
+
+The **only** configuration file is `js/site-lock-config.js`.
+
+1. Choose a password. Do not put that password in the file.
+2. Make a SHA-256 hex hash:
 
 ```powershell
-node scripts/dev-server.js
+node -e "console.log(require('crypto').createHash('sha256').update('YOUR_PASSWORD','utf8').digest('hex'))"
 ```
 
-Open `http://127.0.0.1:8788/`. A wrong password must not show the app. A correct password unlocks it and sets a cookie.
+3. Paste the hex into `SITE_LOCK.hash` in `js/site-lock-config.js`.
+4. Commit and push.
 
-## 4. Add purchased Messer data later
+The repository ships with a hash for the temporary password `change-me`. Replace that hash before you rely on the site.
 
-1. Build `private-data/messer-questions.json` from your purchased material
-2. Keep that file gitignored
-3. Deploy a copy of the project **including** `private-data/` with Wrangler (`npx wrangler pages deploy .`) so Cloudflare has the file even though Git does not
+Unlock state is a token in `sessionStorage` (this visit) or `localStorage` if **Remember this device** is checked. The entered password is not stored. Changing the hash locks old devices.
 
-Until that file exists, the UI uses fake placeholders only.
+## Lock
 
-Do not connect GitHub Pages to this repo as the public site. After Cloudflare is live, treat that URL as the only place the app is reachable.
-
-## 5. GitHub Pages
-
-Do not use GitHub Pages as the live site. It cannot keep this password gate or the private files off the internet.
+The header **Lock** button (also in Settings) clears the unlock token and returns to the password screen.

@@ -150,3 +150,130 @@ function unique(list) {
     return true;
   });
 }
+
+function questionTypeOf(question) {
+  return (question && (question.questionType || question.type)) || "multiple-choice";
+}
+
+function isPbqQuestion(question) {
+  return !!(question && (questionTypeOf(question) === "pbq" || question.pbq));
+}
+
+function isMultiSelectQuestion(question) {
+  const type = questionTypeOf(question);
+  return type === "multiple-select" || type === "multi-select";
+}
+
+function uniqueSortedInts(values) {
+  const seen = {};
+  const out = [];
+  (values || []).forEach(function (value) {
+    const n = Number(value);
+    if (!Number.isInteger(n) || n < 0 || seen[n]) {
+      return;
+    }
+    seen[n] = true;
+    out.push(n);
+  });
+  out.sort(function (a, b) { return a - b; });
+  return out;
+}
+
+function getCorrectAnswerIndexes(question) {
+  if (!question) {
+    return [];
+  }
+  if (isMultiSelectQuestion(question)) {
+    return uniqueSortedInts(question.correctAnswers || question.correct_answers || []);
+  }
+  if (question.correctAnswer != null && Number.isInteger(Number(question.correctAnswer))) {
+    return [Number(question.correctAnswer)];
+  }
+  if (question.correct_answer != null && Number.isInteger(Number(question.correct_answer))) {
+    return [Number(question.correct_answer)];
+  }
+  return [];
+}
+
+function normalizeSelectedIndexes(selected) {
+  if (selected == null) {
+    return [];
+  }
+  if (Array.isArray(selected)) {
+    return uniqueSortedInts(selected);
+  }
+  if (Number.isInteger(selected)) {
+    return [selected];
+  }
+  if (typeof selected === "string" && selected !== "" && Number.isInteger(Number(selected))) {
+    return [Number(selected)];
+  }
+  return [];
+}
+
+function isIndexSelected(selected, index) {
+  if (Array.isArray(selected)) {
+    return selected.indexOf(index) !== -1;
+  }
+  return selected === index;
+}
+
+function hasAnswerSelection(question, selected) {
+  if (isPbqQuestion(question)) {
+    return selected != null;
+  }
+  if (isMultiSelectQuestion(question)) {
+    return normalizeSelectedIndexes(selected).length > 0;
+  }
+  return selected !== null && selected !== undefined;
+}
+
+function toggleSelectedIndex(selected, index) {
+  const list = normalizeSelectedIndexes(selected);
+  const pos = list.indexOf(index);
+  if (pos === -1) {
+    list.push(index);
+    list.sort(function (a, b) { return a - b; });
+  } else {
+    list.splice(pos, 1);
+  }
+  return list;
+}
+
+function arraysEqualSorted(left, right) {
+  if (!left || !right || left.length !== right.length) {
+    return false;
+  }
+  for (let i = 0; i < left.length; i += 1) {
+    if (left[i] !== right[i]) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function isQuestionAnswerCorrect(question, selected) {
+  if (!question) {
+    return false;
+  }
+  if (isPbqQuestion(question) && question.pbq && typeof PbqEngine !== "undefined") {
+    return !!PbqEngine.score(question.pbq, selected).correct;
+  }
+  if (isMultiSelectQuestion(question)) {
+    const want = uniqueSortedInts(question.correctAnswers || question.correct_answers || []);
+    const got = normalizeSelectedIndexes(selected);
+    return want.length > 0 && arraysEqualSorted(want, got);
+  }
+  return selected === question.correctAnswer;
+}
+
+function selectCountHint(question) {
+  if (!isMultiSelectQuestion(question)) {
+    return "";
+  }
+  const n = uniqueSortedInts(question.correctAnswers || question.correct_answers || []).length;
+  if (!n) {
+    return "Select all answers that apply.";
+  }
+  return "Select " + n + " answer" + (n === 1 ? "" : "s");
+}

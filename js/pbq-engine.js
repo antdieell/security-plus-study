@@ -265,10 +265,21 @@ var PbqEngine = (function () {
   function score(spec, answer) {
     const kind = spec.kind || spec.type;
     if (kind === "ordering") {
-      const expected = (spec.correctOrder || []).join();
-      const got = (answer || []).join();
-      const ok = expected === got;
-      return { earned: ok ? 1 : 0, possible: 1, percent: ok ? 100 : 0, correct: ok };
+      const expected = spec.correctOrder || [];
+      const got = Array.isArray(answer) ? answer : [];
+      let earned = 0;
+      expected.forEach(function (id, index) {
+        if (got[index] === id) {
+          earned += 1;
+        }
+      });
+      const possible = expected.length || 1;
+      return {
+        earned: earned,
+        possible: possible,
+        percent: percent(earned, possible),
+        correct: earned === possible && expected.length > 0
+      };
     }
     if (kind === "firewall" || kind === "acl") {
       const slots = spec.slots || [];
@@ -308,9 +319,19 @@ var PbqEngine = (function () {
     if (kind === "ordering") {
       const labels = {};
       (spec.items || []).forEach(function (item) { labels[item.id] = item.text; });
-      config = "<p>Correct order: " + (spec.correctOrder || []).map(function (id, i) {
+      const expected = spec.correctOrder || [];
+      const got = Array.isArray(answer) ? answer : [];
+      config = "<p>Correct order: " + expected.map(function (id, i) {
         return (i + 1) + ". " + escapeHtml(labels[id] || id);
-      }).join(" · ") + "</p>";
+      }).join(" · ") + "</p>" +
+        "<p>Your order: " + (got.length ? got.map(function (id, i) {
+          return (i + 1) + ". " + escapeHtml(labels[id] || id);
+        }).join(" · ") : "—") + "</p><ul>" +
+        expected.map(function (id, i) {
+          const ok = got[i] === id;
+          return "<li>Position " + (i + 1) + ": " + (ok ? "correct" : "incorrect") +
+            " (expected " + escapeHtml(labels[id] || id) + ")</li>";
+        }).join("") + "</ul>";
     } else if (kind === "firewall" || kind === "acl") {
       config = "<p>Correct configuration:</p><ul>" + (spec.slots || []).map(function (slot) {
         const expect = (spec.correct && spec.correct[slot.id]) || {};

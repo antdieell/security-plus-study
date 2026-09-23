@@ -22,6 +22,7 @@ var Settings = (function () {
         "<label class=\"check\"><input type=\"checkbox\" id=\"pref-obj\"" + (state.prefs.showObjectiveIds !== false ? " checked" : "") + "> Show objective IDs on questions</label>" +
         "<label class=\"check\"><input type=\"checkbox\" id=\"pref-alert\"" + (state.prefs.examAlerts ? " checked" : "") + "> Exam timer reminder at 5 minutes remaining</label>" +
         "<label class=\"check\"><input type=\"checkbox\" id=\"pref-motion\"" + (state.prefs.reducedMotion ? " checked" : "") + "> Reduce animation</label>" +
+        "<label class=\"check\"><input type=\"checkbox\" id=\"pref-remember\"" + (typeof SiteLock !== "undefined" && SiteLock.rememberEnabled() ? " checked" : "") + "> Remember this device (stay unlocked after restart)</label>" +
       "</div>" +
       "<div class=\"stack\" style=\"margin-top:14px\">" +
         "<button class=\"btn btn-secondary\" data-set=\"export\">Export progress (JSON)</button>" +
@@ -84,8 +85,8 @@ var Settings = (function () {
     } else if (action === "export") {
       exportFile();
     } else if (action === "lock") {
-      if (typeof SiteSession !== "undefined") {
-        SiteSession.lock();
+      if (typeof SiteLock !== "undefined") {
+        SiteLock.lock();
       }
     } else if (action === "reset") {
       App.showModal({
@@ -114,6 +115,10 @@ var Settings = (function () {
     } else if (event.target.id === "pref-motion") {
       updateState(function (state) { state.prefs.reducedMotion = event.target.checked; });
       App.applyMotionPref();
+    } else if (event.target.id === "pref-remember") {
+      if (typeof SiteLock !== "undefined") {
+        SiteLock.setRemember(event.target.checked);
+      }
     } else if (event.target.id === "import-file" && event.target.files[0]) {
       const file = event.target.files[0];
       App.showModal({

@@ -20,9 +20,25 @@
   <link rel="manifest" href="./manifest.json">
   <link rel="icon" href="./assets/icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="./assets/icon-192.png">
-  <link rel="stylesheet" href="./css/styles.css?v=14">
+  <link rel="stylesheet" href="./css/styles.css?v=17">
 </head>
-<body>
+<body class="is-locked">
+  <div id="site-gate" class="site-gate" role="dialog" aria-modal="true" aria-labelledby="site-gate-title">
+    <form id="site-gate-form" class="site-gate-card" autocomplete="current-password">
+      <h1 id="site-gate-title">Security+ Study Guide</h1>
+      <p class="muted">Private Study Portal</p>
+      <label class="custom-field" for="site-gate-password">Password
+        <span class="site-gate-pass-row">
+          <input id="site-gate-password" name="password" type="password" required autofocus>
+          <button type="button" class="btn btn-secondary" id="site-gate-toggle">Show</button>
+        </span>
+      </label>
+      <label class="check"><input type="checkbox" id="site-gate-remember"> Remember this device</label>
+      <p id="site-gate-error" class="site-gate-error" hidden></p>
+      <button type="submit" class="btn btn-primary" id="site-gate-submit">Unlock</button>
+    </form>
+  </div>
+
   <a class="skip-link" href="#main">Skip to content</a>
 
   <header class="app-header">
@@ -83,38 +99,39 @@
 
   <div class="modal-root" id="modal-root" hidden></div>
 
-  <script src="./data/domains.js?v=14"></script>
-  <script src="./data/objectives.js?v=14"></script>
-  <script src="./data/examConfig.js?v=14"></script>
-  <script src="./data/questions.js?v=14"></script>
-  <script src="./data/questions-source-v2.js?v=14"></script>
-  <script src="./data/flashcards.js?v=14"></script>
-  <script src="./data/studyTopics.js?v=14"></script>
-  <script src="./data/pbqs.js?v=14"></script>
-  <script src="./data/pbqs-v3.js?v=14"></script>
-  <script src="./data/pbq-lab.js?v=14"></script>
-  <script src="./data/messer-placeholders.js?v=14"></script>
-  <script src="./data/ports.js?v=14"></script>
-  <script src="./data/acronyms.js?v=14"></script>
-  <script src="./js/utils.js?v=14"></script>
-  <script src="./js/storage.js?v=14"></script>
-  <script src="./js/session.js?v=14"></script>
-  <script src="./js/question-bank.js?v=14"></script>
-  <script src="./js/pbq-engine.js?v=14"></script>
-  <script src="./js/explanations.js?v=14"></script>
-  <script src="./js/coverage.js?v=14"></script>
-  <script src="./js/analytics.js?v=14"></script>
-  <script src="./js/adaptive.js?v=14"></script>
-  <script src="./js/plan.js?v=14"></script>
-  <script src="./js/study.js?v=14"></script>
-  <script src="./js/quiz.js?v=14"></script>
-  <script src="./js/exam.js?v=14"></script>
-  <script src="./js/flashcards.js?v=14"></script>
-  <script src="./js/progress.js?v=14"></script>
-  <script src="./js/pbq.js?v=14"></script>
-  <script src="./js/drills.js?v=14"></script>
-  <script src="./js/rapid.js?v=14"></script>
-  <script src="./js/settings.js?v=14"></script>
-  <script src="./js/app.js?v=14"></script>
+  <script src="./js/site-lock-config.js?v=15"></script>
+  <script src="./js/site-lock.js?v=15"></script>
+  <script src="./data/domains.js?v=15"></script>
+  <script src="./data/objectives.js?v=15"></script>
+  <script src="./data/examConfig.js?v=15"></script>
+  <script src="./data/questions.js?v=15"></script>
+  <script src="./data/questions-source-v2.js?v=15"></script>
+  <script src="./data/flashcards.js?v=15"></script>
+  <script src="./data/studyTopics.js?v=15"></script>
+  <script src="./data/pbqs.js?v=15"></script>
+  <script src="./data/pbqs-v3.js?v=15"></script>
+  <script src="./data/pbq-lab.js?v=16"></script>
+  <script src="./data/messer-placeholders.js?v=16"></script>
+  <script src="./data/ports.js?v=15"></script>
+  <script src="./data/acronyms.js?v=15"></script>
+  <script src="./js/utils.js?v=16"></script>
+  <script src="./js/storage.js?v=15"></script>
+  <script src="./js/question-bank.js?v=16"></script>
+  <script src="./js/pbq-engine.js?v=16"></script>
+  <script src="./js/explanations.js?v=16"></script>
+  <script src="./js/coverage.js?v=15"></script>
+  <script src="./js/analytics.js?v=15"></script>
+  <script src="./js/adaptive.js?v=15"></script>
+  <script src="./js/plan.js?v=15"></script>
+  <script src="./js/study.js?v=15"></script>
+  <script src="./js/quiz.js?v=16"></script>
+  <script src="./js/exam.js?v=16"></script>
+  <script src="./js/flashcards.js?v=15"></script>
+  <script src="./js/progress.js?v=15"></script>
+  <script src="./js/pbq.js?v=15"></script>
+  <script src="./js/drills.js?v=15"></script>
+  <script src="./js/rapid.js?v=15"></script>
+  <script src="./js/settings.js?v=15"></script>
+  <script src="./js/app.js?v=16"></script>
 </body>
 </html>

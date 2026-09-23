@@ -303,8 +303,8 @@ var App = (function () {
     } else if (action === "mixed") {
       Quiz.startMixed(20);
     } else if (action === "lock") {
-      if (typeof SiteSession !== "undefined") {
-        SiteSession.lock();
+      if (typeof SiteLock !== "undefined") {
+        SiteLock.lock();
       }
     } else if (action === "adaptive") {
       Adaptive.start(10);
@@ -495,10 +495,29 @@ var App = (function () {
     if (!("serviceWorker" in navigator) || location.protocol === "file:") {
       return;
     }
-    navigator.serviceWorker.register("./service-worker.js?v=14", { scope: "./" }).catch(function () {});
+    navigator.serviceWorker.register("./service-worker.js?v=16", { scope: "./" }).catch(function () {});
+  }
+
+  function revealApp() {
+    document.body.classList.remove("is-locked");
   }
 
   function init() {
+    if (typeof SiteLock === "undefined" || !SiteLock.isUnlocked()) {
+      document.body.classList.add("is-locked");
+      if (typeof SiteLock !== "undefined") {
+        SiteLock.bind(function () {
+          revealApp();
+          boot();
+        });
+      }
+      return;
+    }
+    revealApp();
+    boot();
+  }
+
+  function boot() {
     const bankReady = (typeof QuestionBank !== "undefined" && QuestionBank.init)
       ? QuestionBank.init()
       : Promise.resolve();
@@ -515,8 +534,8 @@ var App = (function () {
     const lockBtn = document.getElementById("lock-site");
     if (lockBtn) {
       lockBtn.addEventListener("click", function () {
-        if (typeof SiteSession !== "undefined") {
-          SiteSession.lock();
+        if (typeof SiteLock !== "undefined") {
+          SiteLock.lock();
         }
       });
     }

@@ -11,10 +11,6 @@ var Quiz = (function () {
     };
   }
 
-  function isPbqQuestion(question) {
-    return !!(question && (question.questionType === "pbq" || question.type === "pbq" || question.pbq));
-  }
-
   function buildQuestionSet(config) {
     let pool = (typeof QuestionBank !== "undefined" ? QuestionBank.getPool(config) : QUESTIONS.slice());
     if (config.questionIds && config.questionIds.length) {
@@ -167,7 +163,12 @@ var Quiz = (function () {
     if (!session || session.checked || session.empty) {
       return;
     }
-    session.selected = index;
+    const question = currentQuestion();
+    if (isMultiSelectQuestion(question)) {
+      session.selected = toggleSelectedIndex(session.selected, index);
+    } else {
+      session.selected = index;
+    }
     persistQuiz();
     render();
   }
@@ -183,13 +184,10 @@ var Quiz = (function () {
         session.selected = PbqEngine.getAnswer(host);
       }
     }
-    if (session.selected === null || session.selected === undefined) {
+    if (!hasAnswerSelection(question, session.selected)) {
       return;
     }
-    let isCorrect = session.selected === question.correctAnswer;
-    if (isPbqQuestion(question) && question.pbq && typeof PbqEngine !== "undefined") {
-      isCorrect = !!PbqEngine.score(question.pbq, session.selected).correct;
-    }
+    const isCorrect = isQuestionAnswerCorrect(question, session.selected);
     session.checked = true;
     session.confidence = null;
     session.answers.push({
@@ -296,13 +294,18 @@ var Quiz = (function () {
 
   function optionClass(question, index) {
     const classes = ["option"];
-    if (session.selected === index) {
+    const multi = isMultiSelectQuestion(question);
+    if (multi) {
+      classes.push("option-multi");
+    }
+    if (isIndexSelected(session.selected, index)) {
       classes.push("is-selected");
     }
     if (session.checked && session.settings.mode !== "diagnostic" && !session.settings.timed && session.settings.mode !== "timed") {
-      if (index === question.correctAnswer) {
+      const correctSet = getCorrectAnswerIndexes(question);
+      if (correctSet.indexOf(index) !== -1) {
         classes.push("is-correct");
-      } else if (index === session.selected && index !== question.correctAnswer) {
+      } else if (isIndexSelected(session.selected, index)) {
         classes.push("is-incorrect");
       }
     }
@@ -403,16 +406,20 @@ var Quiz = (function () {
     const letters = ["A", "B", "C", "D", "E", "F"];
     const showMarks = session.checked && session.settings.mode !== "diagnostic" && !session.settings.timed && session.settings.mode !== "timed";
     const pbqMode = isPbqQuestion(question);
+    const multiMode = isMultiSelectQuestion(question);
+    const correctSet = getCorrectAnswerIndexes(question);
     const optionsHtml = pbqMode ? "" : (question.options || []).map(function (option, index) {
       const tags = [];
-      if (showMarks && index === session.selected) {
+      const chosen = isIndexSelected(session.selected, index);
+      if (showMarks && chosen) {
         tags.push("<span class=\"option-tag option-tag-yours\">Your answer</span>");
       }
-      if (showMarks && index === question.correctAnswer) {
+      if (showMarks && correctSet.indexOf(index) !== -1) {
         tags.push("<span class=\"option-tag option-tag-correct\">Correct answer</span>");
       }
       return (
-        "<button class=\"" + optionClass(question, index) + "\" data-action=\"select\" data-index=\"" + index + "\" aria-pressed=\"" + (session.selected === index) + "\"" + (session.checked ? " disabled" : "") + ">" +
+        "<button type=\"button\" class=\"" + optionClass(question, index) + "\" data-action=\"select\" data-index=\"" + index + "\" role=\"" + (multiMode ? "checkbox" : "radio") + "\" aria-checked=\"" + chosen + "\"" + (session.checked ? " disabled" : "") + ">" +
+          (multiMode ? "<span class=\"option-check\" aria-hidden=\"true\"></span>" : "") +
           "<span class=\"letter\">" + letters[index] + "</span>" +
           "<span class=\"option-copy\">" +
             "<span>" + escapeHtml(option) + "</span>" +
@@ -421,6 +428,7 @@ var Quiz = (function () {
         "</button>"
       );
     }).join("");
+    const hint = selectCountHint(question);
 
     let feedback = "";
     if (session.checked) {
@@ -462,13 +470,14 @@ var Quiz = (function () {
         ? "<div class=\"placeholder-banner\" role=\"status\"><strong>DEVELOPMENT / PLACEHOLDER</strong> Fake item for architecture testing. Not purchased Professor Messer content.</div>"
         : "") +
       "<p class=\"question-text\">" + escapeHtml(question.question) + "</p>" +
+      (hint ? "<p class=\"question-hint\">" + escapeHtml(hint) + "</p>" : "") +
       (pbqMode ? "<div id=\"pbq-live\" class=\"stack\"></div>" : "<div class=\"stack\">" + optionsHtml + "</div>") +
       (session.checked ? "<p class=\"muted\">Source: " + escapeHtml(typeof QuestionBank !== "undefined" ? QuestionBank.sourceLabel(question) : "Current Study Bank") + "</p>" : "") +
       "<div class=\"stack\" style=\"margin-top:14px\">" +
         feedback +
         (session.checked
           ? "<button class=\"btn btn-primary\" data-action=\"next\">" + (session.index === total - 1 ? "See results" : "Next question") + "</button>"
-          : "<button class=\"btn btn-primary\" data-action=\"check\"" + (!pbqMode && session.selected === null ? " disabled" : "") + ">" + ((session.settings.timed || session.settings.mode === "timed" || session.settings.mode === "diagnostic") ? "Save and continue" : "Check answer") + "</button>") +
+          : "<button class=\"btn btn-primary\" data-action=\"check\"" + (!pbqMode && !hasAnswerSelection(question, session.selected) ? " disabled" : "") + ">" + ((session.settings.timed || session.settings.mode === "timed" || session.settings.mode === "diagnostic") ? "Save and continue" : "Check answer") + "</button>") +
         (session.checked && session.settings.mode !== "diagnostic" && !session.settings.timed
           ? toolsHtml(question)
           : "") +

@@ -545,6 +545,49 @@ a {
   font-size: 0.82rem;
 }
 
+.option-check {
+  flex: 0 0 22px;
+  width: 22px;
+  height: 22px;
+  margin-top: 3px;
+  border: 2px solid var(--border-strong);
+  border-radius: 6px;
+  background: var(--surface-2);
+  display: grid;
+  place-items: center;
+  font-size: 0.72rem;
+  line-height: 1;
+}
+
+.option.is-selected .option-check {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #062033;
+}
+
+.option.is-selected .option-check::after {
+  content: "✓";
+  font-weight: 800;
+}
+
+.option.is-correct .option-check {
+  border-color: var(--correct);
+  background: var(--correct);
+  color: #052e1f;
+}
+
+.option.is-incorrect .option-check {
+  border-color: var(--incorrect);
+  background: var(--incorrect);
+  color: #3f0d0d;
+}
+
+.question-hint {
+  margin: 0 0 10px;
+  font-weight: 800;
+  color: var(--text-soft);
+}
+
 .option.is-selected {
   border-color: var(--accent);
   background: var(--accent-soft);
@@ -673,6 +716,11 @@ a {
 .review-chip-correct {
   background: var(--correct-bg);
   color: var(--correct);
+}
+
+.review-chip-missed {
+  background: var(--warning-bg);
+  color: var(--warning);
 }
 
 .feedback {
@@ -1125,6 +1173,82 @@ html.reduced-motion *::after {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+body.is-locked {
+  overflow: hidden;
+}
+
+body.is-locked .skip-link,
+body.is-locked .app-header,
+body.is-locked .app-main,
+body.is-locked .bottom-nav {
+  display: none !important;
+}
+
+body:not(.is-locked) .site-gate {
+  display: none;
+}
+
+.site-gate {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: var(--bg);
+}
+
+.site-gate-card {
+  width: min(92vw, 360px);
+  padding: 22px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.site-gate-card h1 {
+  margin: 0 0 8px;
+  font-size: 1.35rem;
+}
+
+.site-gate-pass-row {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+  width: 100%;
+}
+
+.site-gate .custom-field .site-gate-pass-row input,
+.site-gate-pass-row input {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: auto;
+  color: var(--text);
+  background: var(--surface-2);
+  caret-color: var(--accent);
+}
+
+.site-gate .custom-field .site-gate-pass-row input:focus,
+.site-gate-pass-row input:focus {
+  border-color: var(--accent-strong);
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.site-gate .site-gate-pass-row .btn,
+.site-gate .site-gate-pass-row .btn-secondary {
+  flex: 0 0 auto;
+  width: auto;
+  min-width: 0;
+  white-space: nowrap;
+  padding: 0 12px;
+}
+
+.site-gate-error {
+  color: var(--incorrect);
+  margin: 0;
 }
 
 .placeholder-banner {

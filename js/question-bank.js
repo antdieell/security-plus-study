@@ -35,6 +35,10 @@ var QuestionBank = (function () {
     }
     const options = Array.isArray(row.options) ? row.options : (row.choices || []);
     const type = row.questionType || row.type || "multiple-choice";
+    const rawMulti = row.correctAnswers || row.correct_answers;
+    const correctAnswers = Array.isArray(rawMulti) && rawMulti.length
+      ? (typeof uniqueSortedInts === "function" ? uniqueSortedInts(rawMulti) : rawMulti.slice())
+      : null;
     return {
       id: row.id,
       source: row.source || fallbackSource || "original",
@@ -45,7 +49,8 @@ var QuestionBank = (function () {
       options: options,
       choices: options,
       correctAnswer: row.correctAnswer != null ? row.correctAnswer : row.correct_answer,
-      correctAnswers: row.correctAnswers || row.correct_answers || null,
+      correctAnswers: correctAnswers,
+      correct_answers: correctAnswers,
       explanation: row.explanation || "",
       incorrectExplanations: row.incorrectExplanations || row.incorrect_explanations || {},
       objective: row.objective || "",

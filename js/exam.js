@@ -76,10 +76,6 @@ var Exam = (function () {
     }
   }
 
-  function isPbqQuestion(q) {
-    return !!(q && (q.questionType === "pbq" || q.type === "pbq" || q.pbq));
-  }
-
   function captureCurrent() {
     const q = current();
     if (!q || !isPbqQuestion(q) || typeof PbqEngine === "undefined") {
@@ -135,7 +131,7 @@ var Exam = (function () {
     const total = session.questions.length;
     let answered = 0;
     session.questions.forEach(function (q) {
-      if (session.answers[q.id] !== undefined && session.answers[q.id] !== null) {
+      if (hasAnswerSelection(q, session.answers[q.id])) {
         answered += 1;
       }
     });
@@ -152,7 +148,11 @@ var Exam = (function () {
     if (!q) {
       return;
     }
-    session.answers[q.id] = index;
+    if (isMultiSelectQuestion(q)) {
+      session.answers[q.id] = toggleSelectedIndex(session.answers[q.id], index);
+    } else {
+      session.answers[q.id] = index;
+    }
     persist();
     render();
   }
@@ -209,14 +209,10 @@ var Exam = (function () {
     const missedIds = [];
     session.questions.forEach(function (q) {
       const selected = session.answers[q.id];
-      const unanswered = selected === undefined || selected === null;
+      const unanswered = !hasAnswerSelection(q, selected);
       let correct = false;
       if (!unanswered) {
-        if (isPbqQuestion(q) && q.pbq && typeof PbqEngine !== "undefined") {
-          correct = !!PbqEngine.score(q.pbq, selected).correct;
-        } else {
-          correct = selected === q.correctAnswer;
-        }
+        correct = isQuestionAnswerCorrect(q, selected);
       }
       answers.push({
         questionId: q.id,
@@ -318,7 +314,7 @@ var Exam = (function () {
 
   function navigatorHtml() {
     return session.questions.map(function (q, i) {
-      const answered = session.answers[q.id] !== undefined && session.answers[q.id] !== null;
+      const answered = hasAnswerSelection(q, session.answers[q.id]);
       const flagged = session.flags.indexOf(q.id) !== -1;
       const classes = ["nav-dot"];
       if (i === session.index) {
@@ -341,8 +337,13 @@ var Exam = (function () {
     const flagged = session.flags.indexOf(q.id) !== -1;
     const letters = ["A", "B", "C", "D", "E", "F"];
     const pbqMode = isPbqQuestion(q);
+    const multiMode = isMultiSelectQuestion(q);
+    const hint = selectCountHint(q);
     const options = pbqMode ? "" : (q.options || []).map(function (opt, i) {
-      return "<button class=\"option" + (selected === i ? " is-selected" : "") + "\" data-exam=\"select\" data-index=\"" + i + "\"><span class=\"letter\">" + letters[i] + "</span><span>" + escapeHtml(opt) + "</span></button>";
+      const chosen = isIndexSelected(selected, i);
+      return "<button type=\"button\" class=\"option" + (multiMode ? " option-multi" : "") + (chosen ? " is-selected" : "") + "\" data-exam=\"select\" data-index=\"" + i + "\" role=\"" + (multiMode ? "checkbox" : "radio") + "\" aria-checked=\"" + chosen + "\">" +
+        (multiMode ? "<span class=\"option-check\" aria-hidden=\"true\"></span>" : "") +
+        "<span class=\"letter\">" + letters[i] + "</span><span>" + escapeHtml(opt) + "</span></button>";
     }).join("");
     root.innerHTML =
       "<div class=\"quiz-top\">" +
@@ -355,6 +356,7 @@ var Exam = (function () {
         ? "<div class=\"placeholder-banner\" role=\"status\"><strong>DEVELOPMENT / PLACEHOLDER</strong> Fake item for architecture testing. Not purchased Professor Messer content.</div>"
         : "") +
       "<p class=\"question-text\">" + escapeHtml(q.question) + "</p>" +
+      (hint ? "<p class=\"question-hint\">" + escapeHtml(hint) + "</p>" : "") +
       (pbqMode ? "<div id=\"exam-pbq-live\" class=\"stack\"></div>" : "<div class=\"stack\">" + options + "</div>") +
       "<div class=\"controls-row\" style=\"margin-top:14px\">" +
         "<button class=\"btn btn-secondary\" data-exam=\"prev\"" + (session.index === 0 ? " disabled" : "") + ">Previous</button>" +

@@ -20,9 +20,11 @@ SEC+ Study is an independent study tool and is **not affiliated with or endorsed
 
 ## Hosted URL (GitHub Pages)
 
-This is a static app. After you publish the repository, GitHub Pages will serve it from:
+This is a static app. After `git push`, GitHub Pages serves:
 
-`https://YOUR-GITHUB-USERNAME.github.io/security-plus-study/`
+`https://antdieell.github.io/security-plus-study/`
+
+A client-side password screen is the first thing you see. It is a **casual gate**, not server-side security. Deployed files can still be downloaded. See `HOSTING.md` to set the SHA-256 password hash in `js/site-lock-config.js`.
 
 Localhost progress and GitHub Pages progress are stored in **different browser origins**. Use **Settings → Export progress** on one device/origin and **Import progress** on the other if you want to copy history.
 
@@ -83,7 +85,9 @@ security-plus-study/
 │   ├── quiz.js / exam.js / adaptive.js
 │   ├── progress.js            Accordion analytics
 │   ├── pbq.js / rapid.js / flashcards.js / drills.js
-│   ├── storage.js             schema v3 + V1/V2 migration
+│   ├── site-lock-config.js    SHA-256 password hash (only place to set it)
+│   ├── site-lock.js           Password gate / remember-this-device / lock
+│   ├── storage.js             schema v4 + V1–V3 migration
 │   └── ...
 ├── data/
 │   ├── objectives.js          Official SY0-701 hierarchy
@@ -209,6 +213,6 @@ Settings → **Export progress** downloads `sec-plus-study-backup-YYYY-MM-DD.jso
 
 ## Offline PWA
 
-`service-worker.js` cache name is `secplus-study-v9`. HTML and JS/CSS/`data/` use network-first so upgrades are not stuck on a stale shell; other assets stay cache-first. After the first HTTP visit, the question bank and core study features work offline. The service worker is scoped to this folder so a GitHub Pages project URL (`/security-plus-study/`) works.
+`service-worker.js` cache name is `secplus-study-v15`. HTML and JS/CSS/`data/` use network-first so upgrades are not stuck on a stale shell; other assets stay cache-first. After the first HTTP visit, the question bank and core study features work offline. The service worker is scoped to this folder so a GitHub Pages project URL (`/security-plus-study/`) works.
 
 Bump `CACHE_NAME` whenever HTML/JS/data files change.

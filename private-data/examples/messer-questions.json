@@ -13,6 +13,19 @@
       "incorrectExplanations": { "1": "Placeholder.", "2": "Placeholder.", "3": "Placeholder." },
       "objective": "1.1",
       "domain": "general"
+    },
+    {
+      "id": "messer-a-002",
+      "source": "messer",
+      "exam": "A",
+      "type": "multiple-select",
+      "question": "PLACEHOLDER only. Select TWO.",
+      "choices": ["Answer A", "Answer B", "Answer C", "Answer D"],
+      "correctAnswers": [0, 2],
+      "explanation": "Placeholder explanation.",
+      "incorrectExplanations": { "1": "Placeholder.", "3": "Placeholder." },
+      "objective": "1.1",
+      "domain": "general"
     }
   ]
 }

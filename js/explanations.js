@@ -4,7 +4,7 @@
  * original Security+ rationale from the stem, options, and concept map.
  */
 var AnswerReview = (function () {
-  const LETTERS = ["A", "B", "C", "D"];
+  const LETTERS = ["A", "B", "C", "D", "E", "F"];
   const GENERIC_RE = /does not best satisfy|do(?:es)? not meet that requirement|is a distractor in this item|is the best choice for this scenario|matches the (control, process, or outcome|Security\+ concept)|remaining distractor is weaker|not the best match for the required outcome/i;
 
   const TERMS = {
@@ -241,8 +241,13 @@ var AnswerReview = (function () {
     return best ? best.concept : null;
   }
 
+  function optionLetter(index) {
+    return LETTERS[index] || String(index + 1);
+  }
+
   function optionLabel(question, index) {
-    return LETTERS[index] + ". " + String(question.options[index] || "").replace(/\.$/, "");
+    const options = (question && (question.options || question.choices)) || [];
+    return optionLetter(index) + ". " + String(options[index] || "").replace(/\.$/, "");
   }
 
   function normalizeTerm(text) {
@@ -364,7 +369,60 @@ var AnswerReview = (function () {
     };
   }
 
+  function incorrectWhy(question, index) {
+    const stored = question.incorrectExplanations && (
+      question.incorrectExplanations[index] ||
+      question.incorrectExplanations[String(index)]
+    );
+    return stored ? String(stored).trim() : "";
+  }
+
+  function renderMultiSelectHtml(question, selected) {
+    const options = question.options || question.choices || [];
+    const want = uniqueSortedInts(question.correctAnswers || question.correct_answers || []);
+    const got = normalizeSelectedIndexes(selected);
+    const isCorrect = want.length > 0 && arraysEqualSorted(want, got);
+    const selectedLabel = got.length ? got.map(function (index) { return optionLabel(question, index); }).join("; ") : "—";
+    const correctLabel = want.map(function (index) { return optionLabel(question, index); }).join("; ");
+    const correctItems = want.map(function (index) {
+      const yours = got.indexOf(index) !== -1;
+      return "<article class=\"review-item is-right\">" +
+        "<h4>Correct choice: " + optionLetter(index) +
+          " <span class=\"review-chip review-chip-correct\">Correct answer</span>" +
+          (yours
+            ? " <span class=\"review-chip review-chip-yours\">Your answer</span>"
+            : " <span class=\"review-chip review-chip-missed\">Missed</span>") +
+        "</h4>" +
+        "<p><strong>" + escapeHtml(optionLetter(index)) + ".</strong> " + escapeHtml(options[index] || "") + "</p>" +
+      "</article>";
+    }).join("");
+    const wrongItems = got.filter(function (index) {
+      return want.indexOf(index) === -1;
+    }).map(function (index) {
+      const why = incorrectWhy(question, index);
+      return "<article class=\"review-item is-wrong\">" +
+        "<h4>Incorrect selection: " + optionLetter(index) +
+          " <span class=\"review-chip review-chip-yours\">Your answer</span></h4>" +
+        "<p><strong>" + escapeHtml(optionLetter(index)) + ".</strong> " + escapeHtml(options[index] || "") + "</p>" +
+        (why ? "<p>" + escapeHtml(why) + "</p>" : "") +
+      "</article>";
+    }).join("");
+    return "<div class=\"answer-review " + (isCorrect ? "is-ok" : "is-bad") + "\" role=\"region\" aria-label=\"Answer explanation\">" +
+      "<p class=\"review-status\">" + (isCorrect ? "Correct ✓" : "Incorrect ✕") + "</p>" +
+      "<p class=\"review-selected muted\">You selected: " + escapeHtml(selectedLabel) + "</p>" +
+      "<p class=\"review-correct-line\"><strong>Correct answers: " + escapeHtml(correctLabel) + "</strong></p>" +
+      correctItems +
+      wrongItems +
+      (question.explanation ? "<p>" + escapeHtml(question.explanation) + "</p>" : "") +
+      (question.objective ? "<p class=\"muted\">Objective: SY0-701 " + escapeHtml(question.objective) + "</p>" : "") +
+      "<p class=\"muted\">Source: " + escapeHtml(typeof QuestionBank !== "undefined" ? QuestionBank.sourceLabel(question) : "Current Study Bank") + "</p>" +
+    "</div>";
+  }
+
   function renderHtml(question, selectedIndex) {
+    if (typeof isMultiSelectQuestion === "function" && isMultiSelectQuestion(question)) {
+      return renderMultiSelectHtml(question, selectedIndex);
+    }
     const review = build(question, selectedIndex);
     const selectedLabel = selectedIndex === null || selectedIndex === undefined
       ? "—"

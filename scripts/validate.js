@@ -204,6 +204,77 @@ assert(migrated.questionNotes && migrated.errorJournal, "V3 journal/notes presen
 assert(migrated.sourceStats && migrated.sourceStats.original, "V4 sourceStats present");
 assert(migrated.messerExamStats && migrated.messerExamStats.A, "V4 messerExamStats present");
 
+[
+  "data/messer-placeholders.js",
+  "data/pbq-lab.js",
+  "js/pbq-engine.js",
+  "js/question-bank.js"
+].forEach(function (file) {
+  vm.runInContext(fs.readFileSync(path.join(root, file), "utf8"), context);
+});
+
+assert(questions.length === 1335, "Current Study Bank must remain 1335 questions, found " + questions.length);
+assert(questions.every(function (q) {
+  return (q.questionType || q.type || "multiple-choice") === "multiple-choice";
+}), "public bank must stay single-answer multiple-choice");
+
+assert(context.isMultiSelectQuestion({ type: "multiple-select" }), "multiple-select type detected");
+assert(!context.isMultiSelectQuestion({ type: "multiple-choice" }), "multiple-choice is not multiple-select");
+assert(context.isQuestionAnswerCorrect({ type: "multiple-select", correctAnswers: [0, 2] }, [2, 0]), "MS exact set is correct regardless of order");
+assert(!context.isQuestionAnswerCorrect({ type: "multiple-select", correctAnswers: [0, 2] }, [0]), "MS missing choice is incorrect");
+assert(!context.isQuestionAnswerCorrect({ type: "multiple-select", correctAnswers: [0, 2] }, [0, 2, 3]), "MS extra choice is incorrect");
+assert(context.isQuestionAnswerCorrect({ type: "multiple-select", correct_answers: [0, 1, 2] }, [2, 1, 0]), "MS snake_case correct_answers");
+assert(context.isQuestionAnswerCorrect({ type: "multiple-choice", correctAnswer: 1 }, 1), "single-answer still uses correctAnswer");
+assert(!context.isQuestionAnswerCorrect({ type: "multiple-choice", correctAnswer: 1 }, 0), "single-answer miss still fails");
+assert(context.toggleSelectedIndex([0, 2], 2).join() === "0", "toggle removes a duplicate-safe selection");
+assert(context.toggleSelectedIndex([0], 2).join() === "0,2", "toggle adds a new index");
+assert(context.selectCountHint({ type: "multiple-select", correctAnswers: [0, 2] }) === "Select 2 answers", "Select 2 hint");
+assert(context.selectCountHint({ type: "multiple-select", correctAnswers: [0, 1, 2] }) === "Select 3 answers", "Select 3 hint");
+assert(!context.hasAnswerSelection({ type: "multiple-select", correctAnswers: [0, 2] }, []), "empty MS array is unanswered");
+assert(context.hasAnswerSelection({ type: "multiple-choice", correctAnswer: 0 }, 0), "index 0 remains a valid single answer");
+
+context.QuestionBank.setExtra(context.MESSER_PLACEHOLDERS);
+const examA = context.QuestionBank.getMesserExam("A");
+const examB = context.QuestionBank.getMesserExam("B");
+const examC = context.QuestionBank.getMesserExam("C");
+const two = examA.filter(function (q) { return q.id === "messer-a-002"; })[0];
+const three = examB.filter(function (q) { return q.id === "messer-b-002"; })[0];
+assert(two && two.type === "multiple-select" && two.correctAnswers.join() === "0,3", "fake Select TWO imported");
+assert(three && three.correctAnswers.join() === "0,1,2", "fake Select THREE normalizes correct_answers");
+assert(examA.length >= 2, "Exam A includes MS development item");
+assert(examC.filter(function (q) { return q.id === "messer-c-002"; }).length === 1, "Exam C includes multipart ordering");
+
+const orderSpec = {
+  kind: "ordering",
+  items: [
+    { id: "a", text: "A" },
+    { id: "b", text: "B" },
+    { id: "c", text: "C" },
+    { id: "d", text: "D" }
+  ],
+  correctOrder: ["a", "b", "c", "d"]
+};
+const orderFull = context.PbqEngine.score(orderSpec, ["a", "b", "c", "d"]);
+assert(orderFull.correct && orderFull.earned === 4 && orderFull.possible === 4 && orderFull.percent === 100, "ordering 100% is 4/4");
+const orderPart = context.PbqEngine.score(orderSpec, ["a", "b", "d", "c"]);
+assert(!orderPart.correct && orderPart.earned === 2 && orderPart.possible === 4 && orderPart.percent === 50, "ordering partial A,B,D,C is 2/4");
+const orderNone = context.PbqEngine.score(orderSpec, ["d", "c", "b", "a"]);
+assert(!orderNone.correct && orderNone.earned === 0 && orderNone.possible === 4, "ordering all wrong is 0/4");
+
+const multiPart = {
+  kind: "multipart",
+  parts: [
+    { kind: "dropdown", correct: { s: "x" } },
+    { kind: "ordering", correctOrder: ["a", "b", "c"] }
+  ]
+};
+const multiScore = context.PbqEngine.score(multiPart, { parts: [{ s: "x" }, ["a", "c", "b"]] });
+assert(multiScore.earned === 2 && multiScore.possible === 4 && !multiScore.correct, "multipart keeps ordering partial credit (1+1 of 1+3)");
+const multiFull = context.PbqEngine.score(multiPart, { parts: [{ s: "x" }, ["a", "b", "c"]] });
+assert(multiFull.correct && multiFull.earned === 4 && multiFull.possible === 4, "multipart full credit still works");
+
+context.QuestionBank.setExtra(context.MESSER_PLACEHOLDERS);
+
 const v2 = JSON.parse(JSON.stringify(migrated));
 v2.schemaVersion = 2;
 v2.questionStats.q013 = { attempts: 4, correct: 3, confidence: "somewhat" };

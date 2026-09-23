@@ -1,10 +1,11 @@
 # Private purchased data
 
-This folder is served only after the site password is accepted.
+GitHub Pages is **static**. Anything you commit and push is downloadable, even behind the password screen.
 
-- Put purchased Professor Messer JSON here as `messer-questions.json`
-- That file is gitignored and must never be committed
-- Use `private-data/examples/messer-questions.json` for the expected shape
-- Until a real file is present, the app uses in-repo **fake placeholders**
+- Do **not** commit purchased Professor Messer PDFs, JSON, or explanations
+- If you later build `messer-questions.json`, keep it gitignored
+- Use `private-data/examples/messer-questions.json` for the expected shape only
+- `type: "multiple-select"` uses `correctAnswers` (or `correct_answers`) as 0-based index arrays. Ordering PBQs score per position.
+- Until a real local file exists, the app uses in-repo **fake placeholders**
 
-DO NOT COMMIT purchased PDFs, JSON, or explanations.
+The password gate is not secure storage.
