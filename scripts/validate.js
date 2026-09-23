@@ -163,7 +163,7 @@ context.window = {
 };
 vm.runInContext(fs.readFileSync(path.join(root, "js/storage.js"), "utf8"), context);
 
-assert(context.SCHEMA_VERSION === 3, "SCHEMA_VERSION should be 3");
+assert(context.SCHEMA_VERSION === 4, "SCHEMA_VERSION should be 4");
 
 const v1 = {
   totalAnswered: 10,
@@ -177,7 +177,7 @@ const v1 = {
 };
 memory[context.STORAGE_KEY] = JSON.stringify(v1);
 const migrated = context.getAppState();
-assert(migrated.schemaVersion === 3, "V1 migrates to schema 3");
+assert(migrated.schemaVersion === 4, "V1 migrates to schema 4");
 assert(migrated.totalAnswered === 10 && migrated.totalCorrect === 5, "V1 totals preserved");
 assert(migrated.missedQuestions.indexOf("q012") === -1, "obsolete question IDs removed from missed");
 assert(!migrated.questionStats.q012, "obsolete question stats removed");
@@ -201,6 +201,8 @@ assert(migrated.streak.count === 2, "streak preserved");
 assert(migrated.quizHistory.length === 1, "quiz history preserved");
 assert(Array.isArray(migrated.dailyPlans), "V3 dailyPlans present");
 assert(migrated.questionNotes && migrated.errorJournal, "V3 journal/notes present");
+assert(migrated.sourceStats && migrated.sourceStats.original, "V4 sourceStats present");
+assert(migrated.messerExamStats && migrated.messerExamStats.A, "V4 messerExamStats present");
 
 const v2 = JSON.parse(JSON.stringify(migrated));
 v2.schemaVersion = 2;
@@ -208,7 +210,7 @@ v2.questionStats.q013 = { attempts: 4, correct: 3, confidence: "somewhat" };
 v2.sessionHistory = [{ type: "exam30", score: 20, total: 30, percent: 67, questionIds: ["q001"] }];
 memory[context.STORAGE_KEY] = JSON.stringify(v2);
 const fromV2 = context.getAppState();
-assert(fromV2.schemaVersion === 3, "V2 migrates to schema 3");
+assert(fromV2.schemaVersion === 4, "V2 migrates to schema 4");
 assert(!fromV2.questionStats.q013, "obsolete V2 question stats removed");
 assert(fromV2.sessionHistory.length === 1, "V2 exam history preserved");
 
@@ -232,7 +234,7 @@ assert(empty.totalAnswered === 0 && empty.quizHistory.length === 0, "reset clear
 
 const exported = JSON.parse(context.exportProgressJson());
 assert(exported.state && exported.data && exported.app === "SEC+ Study", "export envelope");
-assert(exported.schemaVersion === 3, "export schemaVersion 3");
+assert(exported.schemaVersion === 4, "export schemaVersion 4");
 const imported = context.importProgressJson(JSON.stringify(exported));
 assert(imported.ok, "import valid backup");
 assert(context.importProgressJson("{nope").ok === false, "invalid JSON import rejected");

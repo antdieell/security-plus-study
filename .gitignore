@@ -1,9 +1,31 @@
 # Secrets and local environment
 .env
 .env.*
+!.env.example
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
+SITE_PASSWORD
+SESSION_SECRET
 *.pem
 *.key
 credentials.json
+wrangler.toml
+
+# PRIVATE purchased study material — DO NOT COMMIT
+private-data/*
+!private-data/README.md
+!private-data/examples/
+!private-data/examples/**
+*messer-questions.json
+!private-data/examples/messer-questions.json
+*Messer*.pdf
+*messer*.pdf
+*extracted*messer*
+*purchased*
+*messer-explanations*
+private-pbq*
+private-pbqs*
 
 # Python cache
 __pycache__/

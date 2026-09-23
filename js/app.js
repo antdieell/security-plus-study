@@ -102,10 +102,17 @@ var App = (function () {
         "<strong>" + escapeHtml(rec.title) + "</strong>" +
         "<p class=\"muted\" style=\"margin:8px 0 0\">" + escapeHtml(rec.body) + "</p></button>" +
       "<div class=\"grid-2\" style=\"margin-top:12px\">" +
-        "<button class=\"action-card\" data-home=\"quick\"><strong>10 Questions</strong><span>Fast mixed set</span></button>" +
+        "<button class=\"action-card\" data-home=\"quick\"><strong>10 Questions</strong><span>Current Study Bank</span></button>" +
         "<button class=\"action-card\" data-home=\"exam\"><strong>Exam Mode</strong><span>Timed simulation</span></button>" +
         "<button class=\"action-card\" data-home=\"pbq\"><strong>PBQ</strong><span>Hands-on style</span></button>" +
         "<button class=\"action-card\" data-home=\"rapid\"><strong>Rapid Review</strong><span>~5 minutes</span></button>" +
+      "</div>" +
+      "<h2 class=\"section-title\">Question sources</h2>" +
+      "<div class=\"stack\">" +
+        "<button class=\"card card-button\" data-home=\"messer-a\"><strong>Professor Messer Exam A</strong><span class=\"muted\" style=\"display:block;margin-top:6px\">90-question practice exam (placeholders until private import)</span></button>" +
+        "<button class=\"card card-button\" data-home=\"messer-b\"><strong>Professor Messer Exam B</strong><span class=\"muted\" style=\"display:block;margin-top:6px\">90-question practice exam (placeholders until private import)</span></button>" +
+        "<button class=\"card card-button\" data-home=\"messer-c\"><strong>Professor Messer Exam C</strong><span class=\"muted\" style=\"display:block;margin-top:6px\">90-question practice exam (placeholders until private import)</span></button>" +
+        "<button class=\"card card-button\" data-home=\"mixed\"><strong>Mixed Practice</strong><span class=\"muted\" style=\"display:block;margin-top:6px\">Current Study Bank plus Messer overlay</span></button>" +
       "</div>" +
       "<h2 class=\"section-title\">Review due</h2>" +
       "<div class=\"card row-between\"><strong>" + due + " questions</strong>" + (due ? "<button class=\"btn btn-secondary\" data-home=\"review-due\">Review</button>" : "<span class=\"muted\">Caught up</span>") + "</div>" +
@@ -127,7 +134,9 @@ var App = (function () {
       "<div class=\"stack\">" +
         "<button class=\"card card-button\" data-prac=\"quiz\"><strong>Quick / Custom Quiz</strong><span class=\"muted\" style=\"display:block;margin-top:6px\">Immediate explanations. 10, 25, or filters.</span></button>" +
         "<button class=\"card card-button\" data-prac=\"adaptive\"><strong>Adaptive Study</strong><span class=\"muted\" style=\"display:block;margin-top:6px\">Weak domains, missed items, due reviews.</span></button>" +
-        "<button class=\"card card-button\" data-prac=\"exam\"><strong>Exam Mode</strong><span class=\"muted\" style=\"display:block;margin-top:6px\">Timed simulation. Answers hidden until submit.</span></button>" +
+        "<button class=\"card card-button\" data-prac=\"exam\"><strong>Exam Mode</strong><span class=\"muted\" style=\"display:block;margin-top:6px\">Timed simulation. Study Bank, Messer A/B/C, or Mixed. Answers hidden until submit.</span></button>" +
+        "<button class=\"card card-button\" data-prac=\"messer-a\"><strong>Professor Messer Exam A</strong><span class=\"muted\" style=\"display:block;margin-top:6px\">Complete practice exam. Placeholders until private import.</span></button>" +
+        "<button class=\"card card-button\" data-prac=\"mixed\"><strong>Mixed Practice</strong><span class=\"muted\" style=\"display:block;margin-top:6px\">Study Bank + Messer overlay in the existing quiz engine.</span></button>" +
         "<button class=\"card card-button\" data-prac=\"pbq\"><strong>PBQ Practice</strong><span class=\"muted\" style=\"display:block;margin-top:6px\">Ordering, matching, and scenario drills.</span></button>" +
         "<button class=\"card card-button\" data-prac=\"ports\"><strong>Ports & Protocols</strong><span class=\"muted\" style=\"display:block;margin-top:6px\">Rapid recall. HTTPS → 443.</span></button>" +
         "<button class=\"card card-button\" data-prac=\"acronyms\"><strong>Acronym Drill</strong><span class=\"muted\" style=\"display:block;margin-top:6px\">SIEM, SOAR, ZTNA, and more.</span></button>" +
@@ -285,6 +294,18 @@ var App = (function () {
     const action = actionEl.getAttribute("data-home");
     if (action === "quick" || action === "continue") {
       Quiz.startQuick();
+    } else if (action === "messer-a") {
+      Exam.start("messerA");
+    } else if (action === "messer-b") {
+      Exam.start("messerB");
+    } else if (action === "messer-c") {
+      Exam.start("messerC");
+    } else if (action === "mixed") {
+      Quiz.startMixed(20);
+    } else if (action === "lock") {
+      if (typeof SiteSession !== "undefined") {
+        SiteSession.lock();
+      }
     } else if (action === "adaptive") {
       Adaptive.start(10);
     } else if (action === "review-due") {
@@ -335,6 +356,10 @@ var App = (function () {
     const action = el.getAttribute("data-prac");
     if (action === "adaptive") {
       Adaptive.start(10);
+    } else if (action === "messer-a") {
+      Exam.start("messerA");
+    } else if (action === "mixed") {
+      Quiz.startMixed(20);
     } else if (action === "timed") {
       Adaptive.start(10, { mode: "timed", timed: true, durationMs: 10 * 60 * 1000 });
     } else if (map[action]) {
@@ -470,10 +495,13 @@ var App = (function () {
     if (!("serviceWorker" in navigator) || location.protocol === "file:") {
       return;
     }
-    navigator.serviceWorker.register("./service-worker.js?v=11", { scope: "./" }).catch(function () {});
+    navigator.serviceWorker.register("./service-worker.js?v=14", { scope: "./" }).catch(function () {});
   }
 
   function init() {
+    const bankReady = (typeof QuestionBank !== "undefined" && QuestionBank.init)
+      ? QuestionBank.init()
+      : Promise.resolve();
     Study.init();
     Quiz.init();
     Cards.init();
@@ -484,6 +512,14 @@ var App = (function () {
     Rapid.init();
     Settings.init();
     applyMotionPref();
+    const lockBtn = document.getElementById("lock-site");
+    if (lockBtn) {
+      lockBtn.addEventListener("click", function () {
+        if (typeof SiteSession !== "undefined") {
+          SiteSession.lock();
+        }
+      });
+    }
     document.getElementById("view-home").addEventListener("click", onHomeClick);
     document.getElementById("view-practice").addEventListener("click", onPracticeClick);
     document.getElementById("view-review").addEventListener("click", onReviewClick);
@@ -502,6 +538,10 @@ var App = (function () {
     refreshChrome();
     registerWorker();
     window.setTimeout(offerResume, 400);
+    Promise.resolve(bankReady).then(function () {
+      route();
+      refreshChrome();
+    });
   }
 
   function applyMotionPref() {

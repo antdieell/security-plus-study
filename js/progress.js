@@ -15,6 +15,26 @@ var Progress = (function () {
     return "";
   }
 
+  function sourceStatsHtml(state) {
+    const src = state.sourceStats || {};
+    const orig = src.original || { attempted: 0, correct: 0 };
+    const messer = src.messer || { attempted: 0, correct: 0 };
+    const exams = state.messerExamStats || {};
+    const bests = state.personalBests || {};
+    function row(label, pair) {
+      return "<div class=\"row-between\"><span>" + escapeHtml(label) + "</span><span>" +
+        formatPercent(percent(pair.correct, pair.attempted)) + " · " + (pair.attempted || 0) + " answered</span></div>";
+    }
+    return row("Current Study Bank", orig) +
+      row("Professor Messer", messer) +
+      row("Messer Exam A", exams.A || { attempted: 0, correct: 0 }) +
+      row("Messer Exam B", exams.B || { attempted: 0, correct: 0 }) +
+      row("Messer Exam C", exams.C || { attempted: 0, correct: 0 }) +
+      "<p class=\"muted\">Best Messer exams — A: " + (bests.messerA != null ? bests.messerA + "%" : "—") +
+      " · B: " + (bests.messerB != null ? bests.messerB + "%" : "—") +
+      " · C: " + (bests.messerC != null ? bests.messerC + "%" : "—") + "</p>";
+  }
+
   function covBar(pct) {
     const n = Math.max(0, Math.min(10, Math.round((pct || 0) / 10)));
     return "<span class=\"cov-bar\" aria-hidden=\"true\">" + "█".repeat(n) + "░".repeat(10 - n) + "</span>";
@@ -199,6 +219,7 @@ var Progress = (function () {
           return "<div class=\"row-between\"><span>" + escapeHtml(c.topic) + " · " + formatPercent(c.accuracy) + " · " + escapeHtml(c.mastery) + "</span><button class=\"chip\" data-action=\"practice-topic\" data-topic=\"" + escapeHtml(c.topic) + "\">Practice</button></div>";
         }).join("") : "<p class=\"muted\">Answer more questions to build concept stats.</p>"),
         openSection === "topics") +
+      section("sources", "Question sources", sourceStatsHtml(state), openSection === "sources") +
       section("exams", "Exam history", examHistory(state), openSection === "exams") +
       section("pbq", "PBQ performance", pbqHtml, openSection === "pbq") +
       section("journal", "Error Journal", journalPreview(state), openSection === "journal") +

@@ -1121,6 +1121,66 @@ html.reduced-motion *::after {
   min-height: 44px;
 }
 
+.header-tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.placeholder-banner {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--warning);
+  background: var(--warning-bg);
+  color: var(--text);
+  font-size: 0.85rem;
+}
+
+.lock-btn {
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.pbq-match-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.pbq-engine .option {
+  min-height: var(--touch);
+}
+
+.pbq-part {
+  margin-top: 12px;
+}
+
+.pbq-diagram {
+  display: grid;
+  gap: 8px;
+}
+
+.pbq-node {
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+}
+
+@media (max-width: 640px) {
+  .pbq-match-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 360px) {
   .grid-2 {
     gap: 8px;

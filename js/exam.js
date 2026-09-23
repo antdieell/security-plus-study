@@ -76,14 +76,39 @@ var Exam = (function () {
     }
   }
 
+  function isPbqQuestion(q) {
+    return !!(q && (q.questionType === "pbq" || q.type === "pbq" || q.pbq));
+  }
+
+  function captureCurrent() {
+    const q = current();
+    if (!q || !isPbqQuestion(q) || typeof PbqEngine === "undefined") {
+      return;
+    }
+    const host = document.getElementById("exam-pbq-live");
+    if (host) {
+      session.answers[q.id] = PbqEngine.getAnswer(host);
+    }
+  }
+
   function start(modeKey) {
     const mode = EXAM_CONFIG.modes[modeKey] || EXAM_CONFIG.modes.exam30;
-    let count = mode.count;
-    let available = QUESTIONS.length;
-    if (count > available) {
-      count = available;
+    let questions = [];
+    if (mode.source === "messer" && mode.exam && typeof QuestionBank !== "undefined") {
+      questions = QuestionBank.getMesserExam(mode.exam);
+      if (questions.length > mode.count) {
+        questions = questions.slice(0, mode.count);
+      }
+    } else if (mode.source === "mixed" && typeof QuestionBank !== "undefined") {
+      const pool = QuestionBank.getPool({ source: "mixed" });
+      questions = (typeof pickExamQuestions === "function" ? pickExamQuestions(mode.count, { pool: pool }) : pickWeightedQuestions(mode.count, pool));
+    } else {
+      let count = mode.count;
+      if (count > QUESTIONS.length) {
+        count = QUESTIONS.length;
+      }
+      questions = (typeof pickExamQuestions === "function" ? pickExamQuestions : pickWeightedQuestions)(count);
     }
-    const questions = (typeof pickExamQuestions === "function" ? pickExamQuestions : pickWeightedQuestions)(count);
     session = {
       empty: !questions.length,
       type: modeKey,
@@ -133,12 +158,14 @@ var Exam = (function () {
   }
 
   function go(delta) {
+    captureCurrent();
     session.index = clamp(session.index + delta, 0, session.questions.length - 1);
     persist();
     render();
   }
 
   function jump(i) {
+    captureCurrent();
     session.index = i;
     persist();
     render();
@@ -160,6 +187,8 @@ var Exam = (function () {
   }
 
   function confirmSubmit() {
+    captureCurrent();
+    persist();
     const c = counts();
     App.showModal({
       title: "Submit exam?",
@@ -181,7 +210,14 @@ var Exam = (function () {
     session.questions.forEach(function (q) {
       const selected = session.answers[q.id];
       const unanswered = selected === undefined || selected === null;
-      const correct = !unanswered && selected === q.correctAnswer;
+      let correct = false;
+      if (!unanswered) {
+        if (isPbqQuestion(q) && q.pbq && typeof PbqEngine !== "undefined") {
+          correct = !!PbqEngine.score(q.pbq, selected).correct;
+        } else {
+          correct = selected === q.correctAnswer;
+        }
+      }
       answers.push({
         questionId: q.id,
         domain: q.domain,
@@ -213,7 +249,9 @@ var Exam = (function () {
           domainId: q.domain,
           isCorrect: correct,
           questionId: q.id,
-          sessionType: session.type
+          sessionType: session.type,
+          source: q.source,
+          exam: q.exam
         });
       }
       if (!correct) {
@@ -259,16 +297,21 @@ var Exam = (function () {
   function renderSetup(root) {
     const avail = QUESTIONS.length;
     const fullCount = Math.min(EXAM_CONFIG.fullQuestionCount, avail);
+    const counts = typeof QuestionBank !== "undefined" ? QuestionBank.counts() : { A: 0, B: 0, C: 0 };
     root.innerHTML =
       "<p class=\"page-kicker\">Exam Mode · " + escapeHtml(EXAM_CONFIG.displayName) + "</p>" +
       "<h1 class=\"page-title\">Practice exam</h1>" +
       "<div class=\"card\" style=\"margin-bottom:12px\"><p style=\"margin:0\"><strong>Exam Mode hides answers until you submit.</strong> You can move back and forth and flag items. The timer keeps running if you leave and return.</p></div>" +
       (avail < 90 ? "<p class=\"muted\">Full simulation will use " + fullCount + " questions (bank has " + avail + ").</p>" : "") +
       "<div class=\"stack\">" +
-        "<button class=\"card card-button\" data-exam=\"start\" data-mode=\"exam30\"><strong>30-question exam</strong><span class=\"muted\" style=\"display:block;margin-top:6px\">30 minutes · weighted by SY0-701 domains</span></button>" +
-        "<button class=\"card card-button\" data-exam=\"start\" data-mode=\"exam60\"><strong>60-question exam</strong><span class=\"muted\" style=\"display:block;margin-top:6px\">60 minutes</span></button>" +
-        "<button class=\"card card-button\" data-exam=\"start\" data-mode=\"exam90\"><strong>Full simulation</strong><span class=\"muted\" style=\"display:block;margin-top:6px\">" + fullCount + " questions · " + EXAM_CONFIG.modes.exam90.minutes + " minutes</span></button>" +
+        "<button class=\"card card-button\" data-exam=\"start\" data-mode=\"exam30\"><strong>30-question exam</strong><span class=\"muted\" style=\"display:block;margin-top:6px\">30 minutes · Current Study Bank</span></button>" +
+        "<button class=\"card card-button\" data-exam=\"start\" data-mode=\"exam60\"><strong>60-question exam</strong><span class=\"muted\" style=\"display:block;margin-top:6px\">60 minutes · Current Study Bank</span></button>" +
+        "<button class=\"card card-button\" data-exam=\"start\" data-mode=\"exam90\"><strong>Full simulation</strong><span class=\"muted\" style=\"display:block;margin-top:6px\">" + fullCount + " questions · " + EXAM_CONFIG.modes.exam90.minutes + " minutes · Current Study Bank</span></button>" +
         "<button class=\"card card-button\" data-exam=\"start\" data-mode=\"examWeighted\"><strong>Weighted random exam</strong><span class=\"muted\" style=\"display:block;margin-top:6px\">30 questions using the SY0-701 domain blueprint. Prefers unseen and less-used items.</span></button>" +
+        "<button class=\"card card-button\" data-exam=\"start\" data-mode=\"messerA\"><strong>Professor Messer Exam A</strong><span class=\"muted\" style=\"display:block;margin-top:6px\">90 minutes · " + counts.A + " items" + (counts.A < 90 ? " (placeholders until private import)" : "") + "</span></button>" +
+        "<button class=\"card card-button\" data-exam=\"start\" data-mode=\"messerB\"><strong>Professor Messer Exam B</strong><span class=\"muted\" style=\"display:block;margin-top:6px\">90 minutes · " + counts.B + " items" + (counts.B < 90 ? " (placeholders until private import)" : "") + "</span></button>" +
+        "<button class=\"card card-button\" data-exam=\"start\" data-mode=\"messerC\"><strong>Professor Messer Exam C</strong><span class=\"muted\" style=\"display:block;margin-top:6px\">90 minutes · " + counts.C + " items" + (counts.C < 90 ? " (placeholders until private import)" : "") + "</span></button>" +
+        "<button class=\"card card-button\" data-exam=\"start\" data-mode=\"examMixed\"><strong>Mixed Practice exam</strong><span class=\"muted\" style=\"display:block;margin-top:6px\">90 questions · 90 minutes · Study Bank + Messer overlay</span></button>" +
         "<button class=\"btn btn-secondary\" data-exam=\"hub\">Back to Practice</button>" +
       "</div>";
   }
@@ -296,8 +339,9 @@ var Exam = (function () {
     const c = counts();
     const selected = session.answers[q.id];
     const flagged = session.flags.indexOf(q.id) !== -1;
-    const letters = ["A", "B", "C", "D"];
-    const options = q.options.map(function (opt, i) {
+    const letters = ["A", "B", "C", "D", "E", "F"];
+    const pbqMode = isPbqQuestion(q);
+    const options = pbqMode ? "" : (q.options || []).map(function (opt, i) {
       return "<button class=\"option" + (selected === i ? " is-selected" : "") + "\" data-exam=\"select\" data-index=\"" + i + "\"><span class=\"letter\">" + letters[i] + "</span><span>" + escapeHtml(opt) + "</span></button>";
     }).join("");
     root.innerHTML =
@@ -307,8 +351,11 @@ var Exam = (function () {
         "<p class=\"muted\" style=\"margin:8px 0 0\">Answered " + c.answered + " · Unanswered " + c.unanswered + " · Flagged " + c.flagged + "</p>" +
         "<div class=\"bar\" style=\"margin-top:10px\"><span style=\"width:" + Math.round((c.answered / c.total) * 100) + "%\"></span></div>" +
       "</div>" +
+      ((q.placeholder || /^PLACEHOLDER\b/i.test(q.question || ""))
+        ? "<div class=\"placeholder-banner\" role=\"status\"><strong>DEVELOPMENT / PLACEHOLDER</strong> Fake item for architecture testing. Not purchased Professor Messer content.</div>"
+        : "") +
       "<p class=\"question-text\">" + escapeHtml(q.question) + "</p>" +
-      "<div class=\"stack\">" + options + "</div>" +
+      (pbqMode ? "<div id=\"exam-pbq-live\" class=\"stack\"></div>" : "<div class=\"stack\">" + options + "</div>") +
       "<div class=\"controls-row\" style=\"margin-top:14px\">" +
         "<button class=\"btn btn-secondary\" data-exam=\"prev\"" + (session.index === 0 ? " disabled" : "") + ">Previous</button>" +
         "<button class=\"btn btn-secondary\" data-exam=\"next\"" + (session.index === session.questions.length - 1 ? " disabled" : "") + ">Next</button>" +
@@ -319,6 +366,12 @@ var Exam = (function () {
         "<button class=\"btn btn-primary\" data-exam=\"confirm\">Submit exam</button>" +
       "</div>" +
       "<div id=\"exam-nav-panel\" hidden class=\"card\" style=\"margin-top:12px\"><div class=\"nav-grid\">" + navigatorHtml() + "</div></div>";
+    if (pbqMode && q.pbq && typeof PbqEngine !== "undefined") {
+      const host = document.getElementById("exam-pbq-live");
+      if (host) {
+        PbqEngine.render(host, q.pbq, { review: false, saved: selected });
+      }
+    }
     startTimer();
   }
 
@@ -448,7 +501,12 @@ var Exam = (function () {
         (getAppState().prefs.showDifficulty ? " · " + q.difficulty : "") +
         (flag ? " · Flagged" : "") + "</p><p style=\"font-weight:750\">" + escapeHtml(q.question) +
         "</p><p>" + status + "</p>" +
-        (typeof AnswerReview !== "undefined"
+        ((isPbqQuestion(q) && q.pbq && typeof PbqEngine !== "undefined")
+          ? PbqEngine.reviewHtml(q.pbq, selected) +
+            "<p>" + escapeHtml(q.explanation || "") + "</p>" +
+            (q.objective ? "<p class=\"muted\">Objective: SY0-701 " + escapeHtml(q.objective) + "</p>" : "") +
+            "<p class=\"muted\">Source: " + escapeHtml(typeof QuestionBank !== "undefined" ? QuestionBank.sourceLabel(q) : "Current Study Bank") + "</p>"
+          : typeof AnswerReview !== "undefined"
           ? AnswerReview.renderHtml(q, selected)
           : "<p>Your answer: " +
             (selected === null || selected === undefined ? "—" : escapeHtml(letters[selected] + ". " + q.options[selected])) +

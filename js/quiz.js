@@ -11,8 +11,12 @@ var Quiz = (function () {
     };
   }
 
+  function isPbqQuestion(question) {
+    return !!(question && (question.questionType === "pbq" || question.type === "pbq" || question.pbq));
+  }
+
   function buildQuestionSet(config) {
-    let pool = QUESTIONS.slice();
+    let pool = (typeof QuestionBank !== "undefined" ? QuestionBank.getPool(config) : QUESTIONS.slice());
     if (config.questionIds && config.questionIds.length) {
       pool = getQuestionsByIds(config.questionIds);
     } else if (config.savedOnly) {
@@ -127,7 +131,15 @@ var Quiz = (function () {
   }
 
   function startQuick() {
-    start({ count: 10, mode: "quick", domainIds: DOMAINS.map(function (d) { return d.id; }) });
+    start({ count: 10, mode: "quick", source: "original", domainIds: DOMAINS.map(function (d) { return d.id; }) });
+  }
+
+  function startMesserExam(letter) {
+    start({ count: 90, mode: "messer", source: "messer", exam: letter, domainIds: DOMAINS.map(function (d) { return d.id; }) });
+  }
+
+  function startMixed(count, sources) {
+    start({ count: count || 20, mode: "mixed", source: "mixed", sources: sources || ["original", "messer"], domainIds: DOMAINS.map(function (d) { return d.id; }) });
   }
 
   function startStandard() {
@@ -161,11 +173,23 @@ var Quiz = (function () {
   }
 
   function checkAnswer() {
-    if (!session || session.checked || session.selected === null) {
+    const question = currentQuestion();
+    if (!session || session.checked || !question) {
       return;
     }
-    const question = currentQuestion();
-    const isCorrect = session.selected === question.correctAnswer;
+    if (isPbqQuestion(question) && typeof PbqEngine !== "undefined") {
+      const host = document.getElementById("pbq-live");
+      if (host) {
+        session.selected = PbqEngine.getAnswer(host);
+      }
+    }
+    if (session.selected === null || session.selected === undefined) {
+      return;
+    }
+    let isCorrect = session.selected === question.correctAnswer;
+    if (isPbqQuestion(question) && question.pbq && typeof PbqEngine !== "undefined") {
+      isCorrect = !!PbqEngine.score(question.pbq, session.selected).correct;
+    }
     session.checked = true;
     session.confidence = null;
     session.answers.push({
@@ -293,7 +317,8 @@ var Quiz = (function () {
       "<p class=\"page-kicker\">Practice</p>" +
       "<h1 class=\"page-title\">Choose a quiz</h1>" +
       "<div class=\"stack\">" +
-        "<button class=\"card card-button\" data-action=\"quick\"><strong>Quick Quiz</strong><span class=\"muted\" style=\"display:block;margin-top:6px\">10 mixed questions. Fastest way to study.</span></button>" +
+        sourceChooserHtml() +
+        "<button class=\"card card-button\" data-action=\"quick\"><strong>Quick Quiz</strong><span class=\"muted\" style=\"display:block;margin-top:6px\">10 mixed questions from the Current Study Bank.</span></button>" +
         "<button class=\"card card-button\" data-action=\"standard\"><strong>Standard Quiz</strong><span class=\"muted\" style=\"display:block;margin-top:6px\">25 questions across Security+ domains.</span></button>" +
         "<button class=\"card card-button\" data-action=\"diagnostic\"><strong>Diagnostic Quiz</strong><span class=\"muted\" style=\"display:block;margin-top:6px\">25 weighted questions. Feedback after you finish.</span></button>" +
         "<button class=\"card card-button\" data-action=\"adaptive\" data-count=\"10\"><strong>Adaptive Study</strong><span class=\"muted\" style=\"display:block;margin-top:6px\">Biases toward weak domains, misses, and due reviews. Default 10 questions.</span></button>" +
@@ -346,6 +371,19 @@ var Quiz = (function () {
       "</div>";
   }
 
+  function sourceChooserHtml() {
+    const counts = typeof QuestionBank !== "undefined" ? QuestionBank.counts() : { original: QUESTIONS.length, messer: 0, A: 0, B: 0, C: 0 };
+    const placeholder = counts.messer > 0 && counts.A < 90;
+    return "<div class=\"card stack\" style=\"margin-bottom:4px\">" +
+      "<strong>Question source</strong>" +
+      "<p class=\"muted\" style=\"margin:0\">Current Study Bank stays the default. Professor Messer exams use placeholder items until private data is deployed.</p>" +
+      "<button class=\"card card-button\" data-action=\"messer-a\"><strong>Professor Messer · Exam A</strong><span class=\"muted\" style=\"display:block;margin-top:6px\">" + counts.A + " questions" + (placeholder ? " (placeholders)" : "") + "</span></button>" +
+      "<button class=\"card card-button\" data-action=\"messer-b\"><strong>Professor Messer · Exam B</strong><span class=\"muted\" style=\"display:block;margin-top:6px\">" + counts.B + " questions" + (placeholder ? " (placeholders)" : "") + "</span></button>" +
+      "<button class=\"card card-button\" data-action=\"messer-c\"><strong>Professor Messer · Exam C</strong><span class=\"muted\" style=\"display:block;margin-top:6px\">" + counts.C + " questions" + (placeholder ? " (placeholders)" : "") + "</span></button>" +
+      "<button class=\"card card-button\" data-action=\"mixed\"><strong>Mixed Practice</strong><span class=\"muted\" style=\"display:block;margin-top:6px\">Study Bank + Messer overlay</span></button>" +
+    "</div>";
+  }
+
   function renderEmpty(root) {
     root.innerHTML =
       "<p class=\"page-kicker\">Quiz</p>" +
@@ -362,9 +400,10 @@ var Quiz = (function () {
     const number = session.index + 1;
     const progressPct = Math.round((session.index / total) * 100);
     const saved = isQuestionSaved(question.id);
-    const letters = ["A", "B", "C", "D"];
+    const letters = ["A", "B", "C", "D", "E", "F"];
     const showMarks = session.checked && session.settings.mode !== "diagnostic" && !session.settings.timed && session.settings.mode !== "timed";
-    const optionsHtml = question.options.map(function (option, index) {
+    const pbqMode = isPbqQuestion(question);
+    const optionsHtml = pbqMode ? "" : (question.options || []).map(function (option, index) {
       const tags = [];
       if (showMarks && index === session.selected) {
         tags.push("<span class=\"option-tag option-tag-yours\">Your answer</span>");
@@ -395,9 +434,15 @@ var Quiz = (function () {
               return "<button class=\"chip" + (session.confidence === parts[0] ? " is-selected" : "") + "\" data-action=\"confidence\" data-level=\"" + parts[0] + "\">" + parts[1] + "</button>";
             }).join("") + "</div>"
           : "";
-        const reviewHtml = typeof AnswerReview !== "undefined"
+        const reviewHtml = (pbqMode && question.pbq && typeof PbqEngine !== "undefined")
+          ? "<div class=\"answer-review\"><p>" + (session.answers[session.answers.length - 1] && session.answers[session.answers.length - 1].correct ? "Correct ✓" : "Incorrect ✕") + "</p>" +
+            PbqEngine.reviewHtml(question.pbq, session.selected) +
+            "<p>" + escapeHtml(question.explanation || "") + "</p>" +
+            (question.objective ? "<p class=\"muted\">Objective: SY0-701 " + escapeHtml(question.objective) + "</p>" : "") +
+            "<p class=\"muted\">Source: " + escapeHtml(typeof QuestionBank !== "undefined" ? QuestionBank.sourceLabel(question) : "Current Study Bank") + "</p></div>"
+          : (typeof AnswerReview !== "undefined"
           ? AnswerReview.renderHtml(question, session.selected)
-          : "";
+          : "");
         feedback = reviewHtml + conf;
       }
     }
@@ -413,17 +458,30 @@ var Quiz = (function () {
       "<p class=\"muted\" style=\"margin:0 0 8px\">" + escapeHtml(getDomainShortName(question.domain)) +
         (question.objective && getAppState().prefs.showObjectiveIds !== false ? " · " + question.objective : "") +
         (getAppState().prefs.showDifficulty ? " · " + escapeHtml(question.difficulty) : "") + "</p>" +
+      ((question.placeholder || /^PLACEHOLDER\b/i.test(question.question || ""))
+        ? "<div class=\"placeholder-banner\" role=\"status\"><strong>DEVELOPMENT / PLACEHOLDER</strong> Fake item for architecture testing. Not purchased Professor Messer content.</div>"
+        : "") +
       "<p class=\"question-text\">" + escapeHtml(question.question) + "</p>" +
-      "<div class=\"stack\">" + optionsHtml + "</div>" +
+      (pbqMode ? "<div id=\"pbq-live\" class=\"stack\"></div>" : "<div class=\"stack\">" + optionsHtml + "</div>") +
+      (session.checked ? "<p class=\"muted\">Source: " + escapeHtml(typeof QuestionBank !== "undefined" ? QuestionBank.sourceLabel(question) : "Current Study Bank") + "</p>" : "") +
       "<div class=\"stack\" style=\"margin-top:14px\">" +
         feedback +
         (session.checked
           ? "<button class=\"btn btn-primary\" data-action=\"next\">" + (session.index === total - 1 ? "See results" : "Next question") + "</button>"
-          : "<button class=\"btn btn-primary\" data-action=\"check\"" + (session.selected === null ? " disabled" : "") + ">" + ((session.settings.timed || session.settings.mode === "timed" || session.settings.mode === "diagnostic") ? "Save and continue" : "Check answer") + "</button>") +
+          : "<button class=\"btn btn-primary\" data-action=\"check\"" + (!pbqMode && session.selected === null ? " disabled" : "") + ">" + ((session.settings.timed || session.settings.mode === "timed" || session.settings.mode === "diagnostic") ? "Save and continue" : "Check answer") + "</button>") +
         (session.checked && session.settings.mode !== "diagnostic" && !session.settings.timed
           ? toolsHtml(question)
           : "") +
       "</div>";
+    if (pbqMode && question.pbq && typeof PbqEngine !== "undefined") {
+      const host = document.getElementById("pbq-live");
+      if (host) {
+        PbqEngine.render(host, question.pbq, {
+          review: session.checked && session.settings.mode !== "diagnostic" && !session.settings.timed,
+          saved: session.selected
+        });
+      }
+    }
   }
 
   function toolsHtml(question) {
@@ -553,6 +611,14 @@ var Quiz = (function () {
     const action = actionEl.getAttribute("data-action");
     if (action === "quick") {
       startQuick();
+    } else if (action === "messer-a") {
+      startMesserExam("A");
+    } else if (action === "messer-b") {
+      startMesserExam("B");
+    } else if (action === "messer-c") {
+      startMesserExam("C");
+    } else if (action === "mixed") {
+      startMixed(20);
     } else if (action === "standard") {
       startStandard();
     } else if (action === "diagnostic") {
@@ -686,6 +752,8 @@ var Quiz = (function () {
     render: render,
     start: start,
     startQuick: startQuick,
+    startMesserExam: startMesserExam,
+    startMixed: startMixed,
     startStandard: startStandard,
     startMissedReview: startMissedReview,
     startDiagnostic: startDiagnostic,

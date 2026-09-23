@@ -7,6 +7,17 @@ var Pbq = (function () {
   let checked = false;
 
   function start(id) {
+    const lab = (typeof PBQ_LAB !== "undefined" ? PBQ_LAB : []).filter(function (p) { return p.id === id; })[0];
+    if (lab) {
+      current = { id: lab.id, title: lab.title, prompt: lab.prompt || lab.title, explanation: lab.explanation, engine: true, spec: lab, domain: lab.domain || "general" };
+      checked = false;
+      scenarioChoice = null;
+      matches = {};
+      selected = {};
+      order = [];
+      render();
+      return;
+    }
     current = PBQS.filter(function (p) { return p.id === id; })[0] || null;
     checked = false;
     scenarioChoice = null;
@@ -37,6 +48,9 @@ var Pbq = (function () {
   function scoreCurrent() {
     if (!current) {
       return { correct: false, earned: 0, possible: 1, percent: 0 };
+    }
+    if (current.engine && current.spec && typeof PbqEngine !== "undefined") {
+      return PbqEngine.score(current.spec, current.saved || {});
     }
     if (current.type === "ordering") {
       const ok = order.join() === current.correctOrder.join();
@@ -114,6 +128,11 @@ var Pbq = (function () {
         PBQS.map(function (p) {
           return "<button class=\"card card-button\" data-pbq=\"open\" data-id=\"" + p.id + "\"><strong>" + escapeHtml(p.title) + "</strong><span class=\"muted\" style=\"display:block;margin-top:6px\">" + escapeHtml(p.type) + " · " + escapeHtml(getDomainShortName(p.domain)) + "</span></button>";
         }).join("") +
+        ((typeof PBQ_LAB !== "undefined" && PBQ_LAB.length)
+          ? "<h2 class=\"section-title\">Interactive lab (original fakes)</h2>" + PBQ_LAB.map(function (p) {
+            return "<button class=\"card card-button\" data-pbq=\"open\" data-id=\"" + p.id + "\"><strong>" + escapeHtml(p.title) + "</strong><span class=\"muted\" style=\"display:block;margin-top:6px\">" + escapeHtml(p.kind) + " · reusable engine</span></button>";
+          }).join("")
+          : "") +
         "<button class=\"btn btn-secondary\" data-pbq=\"hub\">Back to Practice</button>" +
       "</div>";
   }
@@ -152,6 +171,28 @@ var Pbq = (function () {
   }
 
   function renderPlay(root) {
+    if (current.engine && current.spec && typeof PbqEngine !== "undefined") {
+      const result = checked ? scoreCurrent() : null;
+      root.innerHTML =
+        "<button class=\"btn btn-ghost\" data-pbq=\"list\" style=\"padding-left:0\">← All PBQs</button>" +
+        "<p class=\"page-kicker\">Interactive PBQ</p>" +
+        "<h1 class=\"page-title\">" + escapeHtml(current.title) + "</h1>" +
+        "<p>" + escapeHtml(current.prompt) + "</p>" +
+        "<div id=\"pbq-lab-live\" class=\"stack\"></div>" +
+        (result ? "<div class=\"feedback " + (result.correct ? "ok" : "bad") + "\" role=\"status\"><strong>PBQ-style practice score: " + result.percent + "%" + (result.possible > 1 ? " (" + result.earned + "/" + result.possible + ")" : "") + "</strong>" +
+          PbqEngine.reviewHtml(current.spec, current.saved) +
+          "<p>" + escapeHtml(current.explanation || "") + "</p>" +
+          (current.spec.objective ? "<p class=\"muted\">Objective: SY0-701 " + escapeHtml(current.spec.objective) + "</p>" : "") +
+          "<p class=\"muted\">Source: " + escapeHtml(current.spec.source || "Original lab") + "</p></div>" : "") +
+        "<div class=\"stack\" style=\"margin-top:12px\">" +
+          (checked ? "<button class=\"btn btn-primary\" data-pbq=\"list\">Back to list</button>" : "<button class=\"btn btn-primary\" data-pbq=\"check\">Check answers</button>") +
+        "</div>";
+      const host = document.getElementById("pbq-lab-live");
+      if (host) {
+        PbqEngine.render(host, current.spec, { review: checked, saved: current.saved });
+      }
+      return;
+    }
     let body = "";
     if (current.type === "ordering") {
       body = renderOrdering();
@@ -214,6 +255,12 @@ var Pbq = (function () {
       scenarioChoice = Number(el.getAttribute("data-index"));
       render();
     } else if (action === "check") {
+      if (current && current.engine && typeof PbqEngine !== "undefined") {
+        const host = document.getElementById("pbq-lab-live");
+        if (host) {
+          current.saved = PbqEngine.getAnswer(host);
+        }
+      }
       check();
     }
   }

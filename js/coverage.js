@@ -36,6 +36,9 @@ var Coverage = (function () {
     });
     const history = (state.answerHistory || []).filter(function (item) {
       const q = getQuestionById(item.questionId);
+      if (typeof QuestionBank !== "undefined" && QuestionBank.isPlaceholder && QuestionBank.isPlaceholder(q)) {
+        return false;
+      }
       return q && q.objective === objectiveId;
     });
     const recent = history.slice(-20);

@@ -287,6 +287,9 @@ var AnswerReview = (function () {
   }
 
   function whyCorrect(question) {
+    if (question.source === "messer") {
+      return String(question.explanation || "See the imported explanation for this item.").trim();
+    }
     const kept = keepUsefulSentences(question.explanation);
     const concept = correctConcept(question);
     const label = optionLabel(question, question.correctAnswer);
@@ -307,6 +310,10 @@ var AnswerReview = (function () {
   }
 
   function whyIncorrect(question, index) {
+    if (question.source === "messer") {
+      const given = question.incorrectExplanations && question.incorrectExplanations[index];
+      return given ? String(given).trim() : "This option is not the imported correct answer.";
+    }
     const stored = question.incorrectExplanations && question.incorrectExplanations[index];
     if (stored && !genericText(stored)) {
       return String(stored).trim();
@@ -381,6 +388,8 @@ var AnswerReview = (function () {
         "<p>" + escapeHtml(review.whyCorrect) + "</p>" +
       "</article>" +
       items +
+      (question.objective ? "<p class=\"muted\">Objective: SY0-701 " + escapeHtml(question.objective) + "</p>" : "") +
+      "<p class=\"muted\">Source: " + escapeHtml(typeof QuestionBank !== "undefined" ? QuestionBank.sourceLabel(question) : "Current Study Bank") + "</p>" +
     "</div>";
   }
 

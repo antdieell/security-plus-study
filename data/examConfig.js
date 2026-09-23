@@ -12,7 +12,11 @@ var EXAM_CONFIG = {
     exam30: { count: 30, minutes: 30, label: "30-question practice exam" },
     exam60: { count: 60, minutes: 60, label: "60-question practice exam" },
     exam90: { count: 90, minutes: 90, label: "Full simulation" },
-    examWeighted: { count: 30, minutes: 30, label: "Weighted random exam" }
+    examWeighted: { count: 30, minutes: 30, label: "Weighted random exam" },
+    messerA: { count: 90, minutes: 90, label: "Professor Messer Exam A", complete: true, source: "messer", exam: "A" },
+    messerB: { count: 90, minutes: 90, label: "Professor Messer Exam B", complete: true, source: "messer", exam: "B" },
+    messerC: { count: 90, minutes: 90, label: "Professor Messer Exam C", complete: true, source: "messer", exam: "C" },
+    examMixed: { count: 90, minutes: 90, label: "Mixed sources exam", source: "mixed" }
   },
   scoreNote: "This is a study estimate, not an official CompTIA exam score.",
   adaptiveWeights: {

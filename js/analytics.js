@@ -1,7 +1,21 @@
 var Analytics = (function () {
+  function isStudyBankId(id) {
+    if (typeof getQuestionById !== "function") {
+      return true;
+    }
+    const q = getQuestionById(id);
+    if (!q) {
+      return false;
+    }
+    if (typeof QuestionBank !== "undefined" && QuestionBank.isPlaceholder(q)) {
+      return false;
+    }
+    return !q.source || q.source === "original";
+  }
+
   function coverage(state) {
     const seen = Object.keys(state.questionStats || {}).filter(function (id) {
-      return state.questionStats[id] && state.questionStats[id].attempts > 0;
+      return isStudyBankId(id) && state.questionStats[id] && state.questionStats[id].attempts > 0;
     }).length;
     const total = QUESTIONS.length;
     return {
@@ -15,7 +29,7 @@ var Analytics = (function () {
     const total = getQuestionsByDomain(domainId).length;
     const seen = Object.keys(state.questionStats || {}).filter(function (id) {
       const q = getQuestionById(id);
-      return q && q.domain === domainId && state.questionStats[id].attempts > 0;
+      return isStudyBankId(id) && q && q.domain === domainId && state.questionStats[id].attempts > 0;
     }).length;
     return { seen: seen, total: total, percent: percent(seen, total) };
   }

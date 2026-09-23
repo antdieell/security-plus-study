@@ -20,7 +20,7 @@
   <link rel="manifest" href="./manifest.json">
   <link rel="icon" href="./assets/icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="./assets/icon-192.png">
-  <link rel="stylesheet" href="./css/styles.css?v=11">
+  <link rel="stylesheet" href="./css/styles.css?v=14">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -33,7 +33,10 @@
         <span class="brand-version">SY0-701</span>
       </div>
     </div>
-    <div class="streak-chip" id="header-streak" aria-label="Study streak">🔥 0</div>
+    <div class="header-tools">
+      <button type="button" class="lock-btn" id="lock-site" aria-label="Lock site">Lock</button>
+      <div class="streak-chip" id="header-streak" aria-label="Study streak">🔥 0</div>
+    </div>
   </header>
 
   <main class="app-main" id="main">
@@ -80,33 +83,38 @@
 
   <div class="modal-root" id="modal-root" hidden></div>
 
-  <script src="./data/domains.js?v=11"></script>
-  <script src="./data/objectives.js?v=11"></script>
-  <script src="./data/examConfig.js?v=11"></script>
-  <script src="./data/questions.js?v=11"></script>
-  <script src="./data/questions-source-v2.js?v=11"></script>
-  <script src="./data/flashcards.js?v=11"></script>
-  <script src="./data/studyTopics.js?v=11"></script>
-  <script src="./data/pbqs.js?v=11"></script>
-  <script src="./data/pbqs-v3.js?v=11"></script>
-  <script src="./data/ports.js?v=11"></script>
-  <script src="./data/acronyms.js?v=11"></script>
-  <script src="./js/utils.js?v=11"></script>
-  <script src="./js/storage.js?v=11"></script>
-  <script src="./js/explanations.js?v=11"></script>
-  <script src="./js/coverage.js?v=11"></script>
-  <script src="./js/analytics.js?v=11"></script>
-  <script src="./js/adaptive.js?v=11"></script>
-  <script src="./js/plan.js?v=11"></script>
-  <script src="./js/study.js?v=11"></script>
-  <script src="./js/quiz.js?v=11"></script>
-  <script src="./js/exam.js?v=11"></script>
-  <script src="./js/flashcards.js?v=11"></script>
-  <script src="./js/progress.js?v=11"></script>
-  <script src="./js/pbq.js?v=11"></script>
-  <script src="./js/drills.js?v=11"></script>
-  <script src="./js/rapid.js?v=11"></script>
-  <script src="./js/settings.js?v=11"></script>
-  <script src="./js/app.js?v=11"></script>
+  <script src="./data/domains.js?v=14"></script>
+  <script src="./data/objectives.js?v=14"></script>
+  <script src="./data/examConfig.js?v=14"></script>
+  <script src="./data/questions.js?v=14"></script>
+  <script src="./data/questions-source-v2.js?v=14"></script>
+  <script src="./data/flashcards.js?v=14"></script>
+  <script src="./data/studyTopics.js?v=14"></script>
+  <script src="./data/pbqs.js?v=14"></script>
+  <script src="./data/pbqs-v3.js?v=14"></script>
+  <script src="./data/pbq-lab.js?v=14"></script>
+  <script src="./data/messer-placeholders.js?v=14"></script>
+  <script src="./data/ports.js?v=14"></script>
+  <script src="./data/acronyms.js?v=14"></script>
+  <script src="./js/utils.js?v=14"></script>
+  <script src="./js/storage.js?v=14"></script>
+  <script src="./js/session.js?v=14"></script>
+  <script src="./js/question-bank.js?v=14"></script>
+  <script src="./js/pbq-engine.js?v=14"></script>
+  <script src="./js/explanations.js?v=14"></script>
+  <script src="./js/coverage.js?v=14"></script>
+  <script src="./js/analytics.js?v=14"></script>
+  <script src="./js/adaptive.js?v=14"></script>
+  <script src="./js/plan.js?v=14"></script>
+  <script src="./js/study.js?v=14"></script>
+  <script src="./js/quiz.js?v=14"></script>
+  <script src="./js/exam.js?v=14"></script>
+  <script src="./js/flashcards.js?v=14"></script>
+  <script src="./js/progress.js?v=14"></script>
+  <script src="./js/pbq.js?v=14"></script>
+  <script src="./js/drills.js?v=14"></script>
+  <script src="./js/rapid.js?v=14"></script>
+  <script src="./js/settings.js?v=14"></script>
+  <script src="./js/app.js?v=14"></script>
 </body>
 </html>

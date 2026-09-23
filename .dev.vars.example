@@ -1,0 +1,6 @@
+# Copy to .dev.vars for local `node scripts/dev-server.js`.
+# NEVER commit .dev.vars or a real password.
+# In Cloudflare Pages, set the same names as encrypted environment variables.
+
+SITE_PASSWORD=change-me-to-a-long-unique-password
+SESSION_SECRET=change-me-to-a-long-random-string

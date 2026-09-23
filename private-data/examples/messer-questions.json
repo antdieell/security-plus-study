@@ -1,0 +1,18 @@
+{
+  "note": "FAKE PLACEHOLDER FILE. Copy to ../messer-questions.json locally when you import purchased items. Do not commit the real file.",
+  "questions": [
+    {
+      "id": "messer-a-001",
+      "source": "messer",
+      "exam": "A",
+      "type": "multiple-choice",
+      "question": "PLACEHOLDER only.",
+      "choices": ["A", "B", "C", "D"],
+      "correctAnswer": 0,
+      "explanation": "Placeholder explanation.",
+      "incorrectExplanations": { "1": "Placeholder.", "2": "Placeholder.", "3": "Placeholder." },
+      "objective": "1.1",
+      "domain": "general"
+    }
+  ]
+}

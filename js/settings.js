@@ -27,6 +27,7 @@ var Settings = (function () {
         "<button class=\"btn btn-secondary\" data-set=\"export\">Export progress (JSON)</button>" +
         "<label class=\"btn btn-secondary\" style=\"cursor:pointer\">Import progress<input id=\"import-file\" type=\"file\" accept=\"application/json\" hidden></label>" +
         "<button class=\"btn btn-danger\" data-set=\"reset\">Reset progress</button>" +
+        "<button class=\"btn btn-secondary\" data-set=\"lock\">Lock site</button>" +
       "</div>" +
       "<p class=\"muted\">Your study progress is stored on this device. No account, no cloud sync, no analytics service. Localhost and the hosted site are different origins — use Export/Import if you want to copy progress between them.</p>" +
       "<p class=\"disclaimer\">SEC+ Study is an independent study tool and is not affiliated with or endorsed by CompTIA. Readiness estimates are not official exam scores.</p>";
@@ -82,6 +83,10 @@ var Settings = (function () {
       render();
     } else if (action === "export") {
       exportFile();
+    } else if (action === "lock") {
+      if (typeof SiteSession !== "undefined") {
+        SiteSession.lock();
+      }
     } else if (action === "reset") {
       App.showModal({
         title: "Reset all progress?",

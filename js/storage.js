@@ -3,7 +3,7 @@
  * Key stays secplus-study-v1 so existing progress is found and upgraded, never wiped.
  */
 var STORAGE_KEY = "secplus-study-v1";
-var SCHEMA_VERSION = 3;
+var SCHEMA_VERSION = 4;
 var HISTORY_CAP = 500;
 var SESSION_HISTORY_CAP = 30;
 
@@ -59,8 +59,17 @@ function createDefaultState() {
     questionNotes: {},
     errorJournal: [],
     readinessHistory: [],
-    personalBests: { exam30: null, exam60: null, exam90: null },
-    customFlashcards: {}
+    personalBests: { exam30: null, exam60: null, exam90: null, messerA: null, messerB: null, messerC: null },
+    customFlashcards: {},
+    sourceStats: {
+      original: { attempted: 0, correct: 0 },
+      messer: { attempted: 0, correct: 0 }
+    },
+    messerExamStats: {
+      A: { attempted: 0, correct: 0 },
+      B: { attempted: 0, correct: 0 },
+      C: { attempted: 0, correct: 0 }
+    }
   };
 }
 
@@ -235,6 +244,22 @@ function migrateAppState(raw) {
   }
   state.customFlashcards = isObject(raw.customFlashcards) ? raw.customFlashcards : {};
 
+  function copyPair(target, rawStats, key) {
+    if (isObject(rawStats) && isObject(rawStats[key])) {
+      target[key].attempted = Number(rawStats[key].attempted) || 0;
+      target[key].correct = Number(rawStats[key].correct) || 0;
+    }
+  }
+  if (isObject(raw.sourceStats)) {
+    copyPair(state.sourceStats, raw.sourceStats, "original");
+    copyPair(state.sourceStats, raw.sourceStats, "messer");
+  }
+  if (isObject(raw.messerExamStats)) {
+    copyPair(state.messerExamStats, raw.messerExamStats, "A");
+    copyPair(state.messerExamStats, raw.messerExamStats, "B");
+    copyPair(state.messerExamStats, raw.messerExamStats, "C");
+  }
+
   rollToday(state);
   state.schemaVersion = SCHEMA_VERSION;
   state.questionBankVersion = typeof raw.questionBankVersion === "string" ? raw.questionBankVersion : null;
@@ -255,7 +280,13 @@ function knownQuestionIdSet() {
 }
 
 function isLiveQuestionId(id, liveIds) {
-  return typeof id === "string" && liveIds && liveIds[id];
+  if (typeof id !== "string") {
+    return false;
+  }
+  if (liveIds && liveIds[id]) {
+    return true;
+  }
+  return /^messer-/i.test(id) || /^lab-/i.test(id);
 }
 
 function migrateQuestionBank(state) {
@@ -468,6 +499,24 @@ function recordQuestionAnswer(options) {
     state.domainStats[domainId].attempted += 1;
     if (isCorrect) {
       state.domainStats[domainId].correct += 1;
+    }
+    const question = typeof getQuestionById === "function" ? getQuestionById(questionId) : null;
+    const sourceKey = question && question.source === "messer" ? "messer" : "original";
+    if (!state.sourceStats) {
+      state.sourceStats = { original: { attempted: 0, correct: 0 }, messer: { attempted: 0, correct: 0 } };
+    }
+    if (!state.sourceStats[sourceKey]) {
+      state.sourceStats[sourceKey] = { attempted: 0, correct: 0 };
+    }
+    state.sourceStats[sourceKey].attempted += 1;
+    if (isCorrect) {
+      state.sourceStats[sourceKey].correct += 1;
+    }
+    if (question && question.exam && state.messerExamStats && state.messerExamStats[question.exam]) {
+      state.messerExamStats[question.exam].attempted += 1;
+      if (isCorrect) {
+        state.messerExamStats[question.exam].correct += 1;
+      }
     }
 
     const missedIndex = state.missedQuestions.indexOf(questionId);
@@ -698,11 +747,22 @@ function getReviewFlashcardIds(state) {
   });
 }
 
+function isDevPlaceholderId(id) {
+  const question = typeof getQuestionById === "function" ? getQuestionById(id) : null;
+  if (!question) {
+    return /^messer-/i.test(String(id || "")) && typeof MESSER_PLACEHOLDERS !== "undefined";
+  }
+  if (typeof QuestionBank !== "undefined" && QuestionBank.isPlaceholder) {
+    return QuestionBank.isPlaceholder(question);
+  }
+  return !!(question.placeholder || /^PLACEHOLDER\b/i.test(String(question.question || "")));
+}
+
 function getDueReviews(state) {
   const today = todayISODate();
   return Object.keys(state.questionStats || {}).filter(function (id) {
     const stat = state.questionStats[id];
-    return stat && stat.nextReview && stat.nextReview <= today;
+    return stat && stat.nextReview && stat.nextReview <= today && !isDevPlaceholderId(id);
   });
 }
 
@@ -775,7 +835,9 @@ function getOverallAccuracy(state) {
 }
 
 function getRecentAccuracy(state, windowSize) {
-  const slice = (state.answerHistory || []).slice(-(windowSize || 50));
+  const slice = (state.answerHistory || []).filter(function (item) {
+    return !isDevPlaceholderId(item.questionId);
+  }).slice(-(windowSize || 50));
   if (!slice.length) {
     return null;
   }
@@ -938,7 +1000,7 @@ function getUserFlashcards() {
 }
 
 function updatePersonalBest(modeKey, scorePercent) {
-  if (["exam30", "exam60", "exam90"].indexOf(modeKey) === -1 || scorePercent == null) {
+  if (["exam30", "exam60", "exam90", "messerA", "messerB", "messerC"].indexOf(modeKey) === -1 || scorePercent == null) {
     return;
   }
   return updateState(function (state) {
